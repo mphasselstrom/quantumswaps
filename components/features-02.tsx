@@ -20,8 +20,8 @@ export default function Features02() {
 
           {/* Section header */}
           <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
-            <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">Seamless. Private. Cost-Effective.</h2>
-            <p className="text-lg text-slate-400">Empower your users with a swap solution that combines deep Solana liquidity, privacy-centric cross-chain capabilities, and a focus on cost-effectiveness.</p>
+            <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">Powerful. Reliable. Developer-First.</h2>
+            <p className="text-lg text-slate-400">Our comprehensive swaps API delivers unmatched liquidity access, cross-chain capabilities, and performance optimizations to enhance your platform's trading experience.</p>
           </div>
 
           {/* Highlighted boxes */}
@@ -66,14 +66,14 @@ export default function Features02() {
                       <div className="md:max-w-[480px] shrink-0 order-1 md:order-none p-6 pt-0 md:p-8 md:pr-0">
                         <div className="mb-5">
                           <div>
-                            <h3 className="inline-flex text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-1">Seamless Cross-Chain Swaps</h3>
-                            <p className="text-slate-400">Enable your users to perform private cross-chain swaps across multiple networks without KYC verification or account registration. Respect their privacy while simplifying the transaction process.</p>
+                            <h3 className="inline-flex text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-1">Cross-Chain API Integration</h3>
+                            <p className="text-slate-400">Enable private cross-chain swaps with our API's seamless blockchain interoperability. Support transactions across 50+ networks without KYC requirements, delivering a frictionless experience through simple API calls.</p>
                           </div>
                         </div>
                         <div>
                           <a className="btn-sm text-slate-300 hover:text-white transition duration-150 ease-in-out group [background:linear-gradient(var(--color-slate-900),var(--color-slate-900))_padding-box,conic-gradient(var(--color-slate-400),var(--color-slate-700)_25%,var(--color-slate-700)_75%,var(--color-slate-400)_100%)_border-box] relative before:absolute before:inset-0 before:bg-slate-800/30 before:rounded-full before:pointer-events-none" href="#0">
                             <span className="relative inline-flex items-center">
-                              Learn more <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span>
+                              API Documentation <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span>
                             </span>
                           </a>
                         </div>
@@ -98,8 +98,8 @@ export default function Features02() {
                       {/* Text */}
                       <div className="md:max-w-[480px] shrink-0 order-1 md:order-none p-6 pt-0 md:p-8">
                         <div>
-                          <h3 className="inline-flex text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-1">Low-Cost Optimization</h3>
-                          <p className="text-slate-400">Benefit from our intelligent swap routing and Solana's inherently low transaction costs, along with dynamic fees from Meteora, to offer your users the most cost-effective swap solutions.</p>
+                          <h3 className="inline-flex text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-1">Optimized API Performance</h3>
+                          <p className="text-slate-400">Our API features intelligent routing algorithms that automatically find the most efficient and cost-effective swap paths. Combined with Solana's low transaction costs and our sub-50ms response times, you'll deliver exceptional trading experiences.</p>
                         </div>
                       </div>
                       {/* Image */}
@@ -122,8 +122,8 @@ export default function Features02() {
                       {/* Text */}
                       <div className="md:max-w-[480px] shrink-0 order-1 md:order-none p-6 pt-0 md:p-8">
                         <div>
-                          <h3 className="inline-flex text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-1">Developer-Friendly API</h3>
-                          <p className="text-slate-400">Easily integrate our API with clear documentation, robust support, and a straightforward integration process for your wallet or dApp.</p>
+                          <h3 className="inline-flex text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-1">Comprehensive API Docs</h3>
+                          <p className="text-slate-400">Get started quickly with detailed API documentation, code examples, and SDKs. Our developer resources make integration straightforward, with dedicated support to ensure your successful implementation.</p>
                         </div>
                       </div>
                       {/* Image */}
@@ -145,9 +145,9 @@ export default function Features02() {
                 <svg className="shrink-0 fill-slate-300" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
                   <path d="M7.999 2.34a4.733 4.733 0 0 0-6.604 6.778l5.904 5.762a1 1 0 0 0 1.4 0l5.915-5.77a4.733 4.733 0 0 0-6.615-6.77Zm5.208 5.348-5.208 5.079-5.2-5.07a2.734 2.734 0 0 1 3.867-3.864c.182.19.335.404.455.638a1.04 1.04 0 0 0 1.756 0 2.724 2.724 0 0 1 5.122 1.294 2.7 2.7 0 0 1-.792 1.923Z" />
                 </svg>
-                <h4 className="font-medium text-slate-50">Raydium Integration</h4>
+                <h4 className="font-medium text-slate-50">Raydium API Access</h4>
               </div>
-              <p className="text-sm text-slate-400">Direct access to one of Solana's leading AMMs for optimized swap rates and minimal slippage.</p>
+              <p className="text-sm text-slate-400">Programmatic access to Raydium's liquidity pools through our unified API for optimal swap rates and minimal slippage.</p>
             </div>
             {/* Feature */}
             <div>
@@ -155,9 +155,9 @@ export default function Features02() {
                 <svg className="shrink-0 fill-slate-300" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
                   <path d="M11 0c1.3 0 2.6.5 3.5 1.5 1 .9 1.5 2.2 1.5 3.5 0 1.3-.5 2.6-1.4 3.5l-1.2 1.2c-.2.2-.5.3-.7.3-.2 0-.5-.1-.7-.3-.4-.4-.4-1 0-1.4l1.1-1.2c.6-.5.9-1.3.9-2.1s-.3-1.6-.9-2.2C12 1.7 10 1.7 8.9 2.8L7.7 4c-.4.4-1 .4-1.4 0-.4-.4-.4-1 0-1.4l1.2-1.1C8.4.5 9.7 0 11 0ZM8.3 12c.4-.4 1-.5 1.4-.1.4.4.4 1 0 1.4l-1.2 1.2C7.6 15.5 6.3 16 5 16c-1.3 0-2.6-.5-3.5-1.5C.5 13.6 0 12.3 0 11c0-1.3.5-2.6 1.5-3.5l1.1-1.2c.4-.4 1-.4 1.4 0 .4.4.4 1 0 1.4L2.9 8.9c-.6.5-.9 1.3-.9 2.1s.3 1.6.9 2.2c1.1 1.1 3.1 1.1 4.2 0L8.3 12Zm1.1-6.8c.4-.4 1-.4 1.4 0 .4.4.4 1 0 1.4l-4.2 4.2c-.2.2-.5.3-.7.3-.2 0-.5-.1-.7-.3-.4-.4-.4-1 0-1.4l4.2-4.2Z" />
                 </svg>
-                <h4 className="font-medium text-slate-50">Meteora Access</h4>
+                <h4 className="font-medium text-slate-50">Meteora API Integration</h4>
               </div>
-              <p className="text-sm text-slate-400">Tap into Meteora's efficient concentrated liquidity model and potentially benefit from its dynamic fee structure.</p>
+              <p className="text-sm text-slate-400">Direct API access to Meteora's efficient concentrated liquidity model with dynamic fee structure for optimized trading.</p>
             </div>
             {/* Feature */}
             <div>
@@ -165,9 +165,9 @@ export default function Features02() {
                 <svg className="shrink-0 fill-slate-300" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
                   <path d="M14 0a2 2 0 0 1 2 2v4a1 1 0 0 1-2 0V2H2v12h4a1 1 0 0 1 0 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h12Zm-1.957 10.629l3.664 3.664a1 1 0 0 1-1.414 1.414l-3.664-3.664-.644 2.578a.5.5 0 0 1-.476.379H9.5a.5.5 0 0 1-.48-.362l-2-7a.5.5 0 0 1 .618-.618l7 2a.5.5 0 0 1-.017.965l-2.578.644Z" />
                 </svg>
-                <h4 className="font-medium text-slate-50">Privacy-First</h4>
+                <h4 className="font-medium text-slate-50">RESTful API Design</h4>
               </div>
-              <p className="text-sm text-slate-400">No KYC or registration requirements, enabling frictionless transactions while preserving user privacy.</p>
+              <p className="text-sm text-slate-400">Clean, modern API endpoints with comprehensive documentation and predictable resource-oriented URLs.</p>
             </div>
             {/* Feature */}
             <div>
@@ -175,9 +175,9 @@ export default function Features02() {
                 <svg className="shrink-0 fill-slate-300" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
                   <path d="M14.3.3c.4-.4 1-.4 1.4 0 .4.4.4 1 0 1.4l-8 8c-.2.2-.4.3-.7.3-.3 0-.5-.1-.7-.3-.4-.4-.4-1 0-1.4l8-8ZM15 7c.6 0 1 .4 1 1 0 4.4-3.6 8-8 8s-8-3.6-8-8 3.6-8 8-8c.6 0 1 .4 1 1s-.4 1-1 1C4.7 2 2 4.7 2 8s2.7 6 6 6 6-2.7 6-6c0-.6.4-1 1-1Z" />
                 </svg>
-                <h4 className="font-medium text-slate-50">Cross-Chain Support</h4>
+                <h4 className="font-medium text-slate-50">Cross-Chain API Support</h4>
               </div>
-              <p className="text-sm text-slate-400">Facilitate asset exchanges across different blockchain networks while maintaining competitive bridging costs.</p>
+              <p className="text-sm text-slate-400">Unified API interface to facilitate asset exchanges across 50+ blockchain networks while maintaining competitive bridging costs.</p>
             </div>
             {/* Feature */}
             <div>
@@ -185,9 +185,9 @@ export default function Features02() {
                 <svg className="shrink-0 fill-slate-300" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
                   <path d="M14 0a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h12Zm0 14V2H2v12h12Zm-3-7H5a1 1 0 1 1 0-2h6a1 1 0 0 1 0 2Zm0 4H5a1 1 0 0 1 0-2h6a1 1 0 0 1 0 2Z" />
                 </svg>
-                <h4 className="font-medium text-slate-50">Intelligent Routing</h4>
+                <h4 className="font-medium text-slate-50">Route Optimization API</h4>
               </div>
-              <p className="text-sm text-slate-400">Automatic path finding to ensure the most efficient and cost-effective routes for all swap transactions.</p>
+              <p className="text-sm text-slate-400">API endpoints that automatically determine the most efficient swap paths for all transactions to maximize returns.</p>
             </div>
             {/* Feature */}
             <div>
@@ -195,9 +195,9 @@ export default function Features02() {
                 <svg className="shrink-0 fill-slate-300" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
                   <path d="M14.574 5.67a13.292 13.292 0 0 1 1.298 1.842 1 1 0 0 1 0 .98C15.743 8.716 12.706 14 8 14a6.391 6.391 0 0 1-1.557-.2l1.815-1.815C10.97 11.82 13.06 9.13 13.82 8c-.163-.243-.39-.56-.669-.907l1.424-1.424ZM.294 15.706a.999.999 0 0 1-.002-1.413l2.53-2.529C1.171 10.291.197 8.615.127 8.49a.998.998 0 0 1-.002-.975C.251 7.29 3.246 2 8 2c1.331 0 2.515.431 3.548 1.038L14.293.293a.999.999 0 1 1 1.414 1.414l-14 14a.997.997 0 0 1-1.414 0ZM2.18 8a12.603 12.603 0 0 0 2.06 2.347l1.833-1.834A1.925 1.925 0 0 1 6 8a2 2 0 0 1 2-2c.178 0 .348.03.512.074l1.566-1.566C9.438 4.201 8.742 4 8 4 5.146 4 2.958 6.835 2.181 8Z" />
                 </svg>
-                <h4 className="font-medium text-slate-50">Comprehensive Coverage</h4>
+                <h4 className="font-medium text-slate-50">API Token Coverage</h4>
               </div>
-              <p className="text-sm text-slate-400">Wide-ranging support for assets on Solana and other major blockchain networks through our cross-chain capabilities.</p>
+              <p className="text-sm text-slate-400">Extensive API support for assets on Solana and other major blockchain networks through our unified swap interface.</p>
             </div>
           </div>
 

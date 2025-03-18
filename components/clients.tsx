@@ -1,14 +1,14 @@
 import Image from 'next/image'
 import Particles from './particles'
 
-// Stats for crypto swaps API
+// Stats for swaps API
 const stats = [
-  { value: "1M+", label: "Pairs" },
+  { value: "+1M", label: "Pairs" },
   { value: "99.999%", label: "Uptime" },
   { value: "0.04%", label: "Slippage" },
   { value: "50+", label: "Blockchains" },
-  { value: "$2B+", label: "Volume" },
-  { value: "24/7", label: "Support" },
+  { value: "$10B+", label: "Volume" },
+  { value: "<50ms", label: "Response" },
 ];
 
 export default function Clients() {

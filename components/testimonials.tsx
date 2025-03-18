@@ -25,21 +25,21 @@ export default function Testimonials() {
   const items: Item[] = [
     {
       img: TestimonialImg01,
-      quote: "The ability to capture responses is a game-changer. If a user gets tired of the sign up and leaves, that data is still persisted. Additionally, it's great to be able to select between formats.ture responses is a game-changer.",
-      name: 'Jessie J',
-      role: 'Ltd Head of Product'
+      quote: "The swap API's ability to capture pending transactions is a game-changer. If a user initiates a swap and network conditions change, the API automatically adjusts for optimal execution. The flexibility to select between different liquidity sources is invaluable.",
+      name: 'Jessie Thompson',
+      role: 'DeFi Wallet CTO'
     },
     {
       img: TestimonialImg02,
-      quote: "I have been using this product for a few weeks now and I am blown away by the results. My skin looks visibly brighter and smoother, and I have received so many compliments on my complexion.",
+      quote: "I've integrated several swap APIs, and QuantumSwap's stands out for its cross-chain capabilities. The API handles all the complex bridging logic behind the scenes, making it seamless to enable multi-chain swaps with just a few API calls.",
       name: 'Mark Luk',
-      role: 'Spark Founder & CEO'
+      role: 'DEX Founder & CEO'
     },
     {
       img: TestimonialImg03,
-      quote: "As a busy professional, I don't have a lot of time to devote to working out. But with this fitness program, I have seen amazing results in just a few short weeks. The workouts are efficient and effective.",
+      quote: "As a dApp developer with limited blockchain expertise, the QuantumSwap API documentation and SDKs made implementation straightforward. Our users now enjoy the best swap rates across Solana with minimal slippage, all through a simple API integration.",
       name: 'Jeff Kahl',
-      role: 'Appy Product Lead'
+      role: 'Fintech Product Lead'
     }
   ]
 

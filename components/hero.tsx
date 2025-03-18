@@ -22,11 +22,11 @@ export default function Hero() {
           {/* Hero content */}
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="h1 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4" data-aos="fade-down">Unlock low-cost, instant cross chain and DeFi swaps</h1>
-            <p className="text-lg text-slate-300 mb-8" data-aos="fade-down" data-aos-delay="200">Integrate our powerful API to provide your users with access to unparalleled liquidity on Raydium and Meteora for optimal swap rates, combined with private, hassle-free cross-chain swaps.</p>
+            <p className="text-lg text-slate-300 mb-8" data-aos="fade-down" data-aos-delay="200">Integrate our powerful API to access Solana's deepest liquidity pools on Raydium and Meteora, paired with fully private cross-chain swap capabilities for the optimal developer experience.</p>
             <div className="max-w-xs mx-auto sm:max-w-none sm:inline-flex sm:justify-center space-y-4 sm:space-y-0 sm:space-x-4" data-aos="fade-down" data-aos-delay="400">
               <div>
                 <a className="btn text-slate-900 bg-linear-to-r from-white/80 via-white to-white/80 hover:bg-white w-full transition duration-150 ease-in-out group" href="mailto:hi@quantumswaps.xyz">
-                  Get in touch <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span>
+                  Request API Access <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span>
                 </a>
               </div>
               <div>
@@ -34,7 +34,7 @@ export default function Hero() {
                   <svg className="shrink-0 fill-slate-300 mr-3" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
                     <path d="m1.999 0 1 2-1 2 2-1 2 1-1-2 1-2-2 1zM11.999 0l1 2-1 2 2-1 2 1-1-2 1-2-2 1zM11.999 10l1 2-1 2 2-1 2 1-1-2 1-2-2 1zM6.292 7.586l2.646-2.647L11.06 7.06 8.413 9.707zM0 13.878l5.586-5.586 2.122 2.121L2.12 16z" />
                   </svg>
-                  <span>See documentation</span>
+                  <span>API Documentation</span>
                 </a>
               </div>
             </div>

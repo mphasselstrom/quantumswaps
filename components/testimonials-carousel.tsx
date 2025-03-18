@@ -57,8 +57,8 @@ export default function TestimonialsCarousel() {
 
           {/* Section header */}
           <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
-            <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">What our users are saying</h2>
-            <p className="text-lg text-slate-400">Discover how crypto wallets and dApps are enhancing their offerings with our seamless swap integration.</p>
+            <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">What developers say about our API</h2>
+            <p className="text-lg text-slate-400">Discover how blockchain developers are leveraging our swaps API to enhance their applications with seamless trading functionality.</p>
           </div>
 
           {/* Carousel built with Swiper.js [https://swiperjs.com/] */}
@@ -93,10 +93,10 @@ export default function TestimonialsCarousel() {
                             <div className="text-yellow-500">★</div>
                           </div>
                         </div>
-                        <p className="text-slate-400 mb-8">The quick, brown fox jumps over a lazy dog. DJs flock by when MTV ax quiz prog. Junk MTV quiz graced by fox whelps.</p>
+                        <p className="text-slate-400 mb-8">Integrating the QuantumSwap API was incredibly straightforward. The documentation is comprehensive, and our users now enjoy the best possible rates across Solana DEXs with minimal slippage. The API response times are consistently under 50ms.</p>
                       </div>
                       <div className="text-right">
-                        <a className="text-sm font-medium text-slate-300 hover:text-white inline-flex items-center transition duration-150 ease-in-out group" href="#0">Learn More <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span></a>
+                        <a className="text-sm font-medium text-slate-300 hover:text-white inline-flex items-center transition duration-150 ease-in-out group" href="#0">Read Success Story <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span></a>
                       </div>
                     </div>
                   </div>
@@ -127,10 +127,10 @@ export default function TestimonialsCarousel() {
                             <div className="text-yellow-500">★</div>
                           </div>
                         </div>
-                        <p className="text-slate-400 mb-8">The quick, brown fox jumps over a lazy dog. DJs flock by when MTV ax quiz prog. Junk MTV quiz graced by fox whelps.</p>
+                        <p className="text-slate-400 mb-8">The cross-chain capabilities of the QuantumSwap API have transformed our wallet application. Our users can now swap assets across 50+ blockchains with no KYC requirements and minimal fees. The API's reliability has been exceptional.</p>
                       </div>
                       <div className="text-right">
-                        <a className="text-sm font-medium text-slate-300 hover:text-white inline-flex items-center transition duration-150 ease-in-out group" href="#0">Learn More <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span></a>
+                        <a className="text-sm font-medium text-slate-300 hover:text-white inline-flex items-center transition duration-150 ease-in-out group" href="#0">Read Success Story <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span></a>
                       </div>
                     </div>
                   </div>
@@ -161,10 +161,10 @@ export default function TestimonialsCarousel() {
                             <div className="text-yellow-500">★</div>
                           </div>
                         </div>
-                        <p className="text-slate-400 mb-8">The quick, brown fox jumps over a lazy dog. DJs flock by when MTV ax quiz prog. Junk MTV quiz graced by fox whelps.</p>
+                        <p className="text-slate-400 mb-8">The route optimization algorithms in the QuantumSwap API are fantastic. We've seen significantly better execution prices compared to other solutions. The API's intelligent pathing across Raydium and Meteora delivers tremendous value to our users.</p>
                       </div>
                       <div className="text-right">
-                        <a className="text-sm font-medium text-slate-300 hover:text-white inline-flex items-center transition duration-150 ease-in-out group" href="#0">Learn More <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span></a>
+                        <a className="text-sm font-medium text-slate-300 hover:text-white inline-flex items-center transition duration-150 ease-in-out group" href="#0">Read Success Story <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span></a>
                       </div>
                     </div>
                   </div>
