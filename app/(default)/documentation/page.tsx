@@ -1,22 +1,11 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import DocSidebar from '@/components/documentation/sidebar'
 import TableOfContents from '@/components/documentation/toc'
 
-export default function DocumentationRedirect() {
-  const router = useRouter()
-  
-  useEffect(() => {
-    router.push('/')
-  }, [router])
-  
-  return null
-}
-
-export function Documentation() {
+export default function Documentation() {
   const tocItems = [
     { id: 'getting-started', title: 'Getting started', level: 1 },
     { id: 'api-interface', title: 'API interface', level: 1 },
@@ -34,6 +23,9 @@ export function Documentation() {
     <div className="relative mx-auto pt-10 sm:px-2 lg:ml-[19.5rem] xl:mr-[19.5rem] max-w-none">
       {/* Left sidebar */}
       <DocSidebar />
+
+      {/* Right sidebar - Table of contents */}
+      <TableOfContents items={tocItems} />
 
       {/* Main content */}
       <main className="max-w-3xl mx-auto relative z-20 px-4 sm:px-6 xl:px-8 pb-16 lg:pb-24 pt-24">
@@ -250,30 +242,26 @@ POST /v1/currencies/supported_networks`}
           
           <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
             <div className="px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-mono text-slate-200">POST /v1/currencies</span>
+              <span className="text-sm font-mono text-slate-200">POST /v1/currencies/info</span>
             </div>
             <div className="p-4">
               <pre className="text-sm text-slate-300 font-mono">
 {`// Request
 {
-  currency: String[],
-  network: String[]
+  currencies: String[],
+  networks: String[]
 }
 
 // Response
 {
-  currencies: [
+  "currencies": [
     {
-      code: String,
+      currency: String,
+      network: String,
       name: String,
-      networks: [
-        {
-          code: String,
-          name: String,
-          minAmount: String,
-          maxAmount: String
-        }
-      ]
+      address: String,
+      decimals: Number,
+      logoURI: String
     }
   ]
 }`}
@@ -293,20 +281,20 @@ POST /v1/currencies/supported_networks`}
 {`// Request
 {
   url: String,
-  subscriptions: String[]
+  triggerEvents: ["swap_created", "swap_executed", "swap_failed"],
+  secret: String
 }
 
 // Response
 {
-  success: Boolean
+  id: String,
+  url: String,
+  triggerEvents: ["swap_created", "swap_executed", "swap_failed"],
+  createdAt: String
 }`}
               </pre>
             </div>
           </div>
-          
-          <p className="mt-2 text-sm text-slate-400">
-            Creating multiple webhooks will overwrite the previous one.
-          </p>
           
           <h3 id="webhook-get" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Get Webhook</h3>
           
@@ -319,29 +307,21 @@ POST /v1/currencies/supported_networks`}
               <pre className="text-sm text-slate-300 font-mono">
 {`// Request
 {
-  // No input required
+  id: String
 }
 
 // Response
 {
+  id: String,
   url: String,
-  subscriptions: String[]
+  triggerEvents: ["swap_created", "swap_executed", "swap_failed"],
+  createdAt: String
 }`}
               </pre>
             </div>
           </div>
-          
-          <div className="not-prose mt-16 border-t border-slate-700 pt-10 flex justify-between">
-            <div></div>
-            <div className="text-right">
-              <span className="text-sm text-slate-400">Next</span>
-              <Link href="/contact" className="block mt-1 text-blue-400 hover:text-blue-300 font-medium">Get in touch</Link>
-            </div>
-          </div>
         </div>
-        
-        {/* Table of contents */}
-        <TableOfContents items={tocItems} />
+
       </main>
     </div>
   )
