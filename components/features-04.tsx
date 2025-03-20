@@ -38,7 +38,7 @@ export default function Features04() {
                     <svg className="shrink-0 fill-slate-300" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
                       <path d="M2 6H0V2a2 2 0 0 1 2-2h4v2H2v4ZM16 6h-2V2h-4V0h4a2 2 0 0 1 2 2v4ZM14 16h-4v-2h4v-4h2v4a2 2 0 0 1-2 2ZM6 16H2a2 2 0 0 1-2-2v-4h2v4h4v2Z" />
                     </svg>
-                    <h4 className="font-medium text-slate-50">150+ Blockchains</h4>
+                    <h4 className="font-medium text-slate-50">50+ Blockchains</h4>
                   </div>
                   <p className="text-sm text-slate-400">Connect with every major blockchain network through our unified cross-chain infrastructure.</p>
                 </div>

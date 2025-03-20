@@ -4,7 +4,7 @@ import Particles from './particles'
 // Stats for swaps API
 const stats = [
   { value: "+700k", label: "Pairs" },
-  { value: "150+", label: "Blockchains" },
+  { value: "50+", label: "Blockchains" },
   { value: "99.9%", label: "Uptime" },
   { value: "No", label: "KYC" },
   { value: "No", label: "Registration" },

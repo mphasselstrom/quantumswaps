@@ -44,7 +44,7 @@ export default function Features02() {
                         <div className="mb-5">
                           <div>
                             <h3 className="inline-flex text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-1">Swap between any chain</h3>
-                            <p className="text-slate-400">Swap assets between 150+ blockchains with lightning-fast finality. Our API handles all the complexity of cross-chain routing and settlement behind the scenes.</p>
+                            <p className="text-slate-400">Swap assets between 50+ blockchains with lightning-fast finality. Our API handles all the complexity of cross-chain routing and settlement behind the scenes.</p>
                           </div>
                         </div>
                       </div>
