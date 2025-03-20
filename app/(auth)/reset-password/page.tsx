@@ -1,6 +1,6 @@
 export const metadata = {
-  title: 'Reset Password - Stellar',
-  description: 'Page description',
+  title: 'Reset Password - Quantum',
+  description: 'Reset your Quantum account password to regain access to your API dashboard.',
 }
 
 import AuthLogo from '../auth-logo'

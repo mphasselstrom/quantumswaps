@@ -1,6 +1,6 @@
 export const metadata = {
-  title: 'Changelog - Stellar',
-  description: 'Page description',
+  title: 'Changelog - Quantum',
+  description: 'Stay up to date with the latest updates and improvements to Quantum\'s cross-chain swap API.',
 }
 
 import { getUpdatePosts } from '@/components/mdx/utils'

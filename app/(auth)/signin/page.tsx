@@ -1,6 +1,6 @@
 export const metadata = {
-  title: 'Sign In - Stellar',
-  description: 'Page description',
+  title: 'Sign In - Quantum',
+  description: 'Sign in to your Quantum account to access API keys and manage your cross-chain swaps.',
 }
 
 import Link from 'next/link'
