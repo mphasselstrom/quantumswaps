@@ -3,12 +3,12 @@ import Particles from './particles'
 
 // Stats for swaps API
 const stats = [
-  { value: "+1M", label: "Pairs" },
-  { value: "99.999%", label: "Uptime" },
-  { value: "0.04%", label: "Slippage" },
-  { value: "50+", label: "Blockchains" },
-  { value: "$10B+", label: "Volume" },
-  { value: "<50ms", label: "Response" },
+  { value: "+40k", label: "Pairs" },
+  { value: "150+", label: "Blockchains" },
+  { value: "99.9%", label: "Uptime" },
+  { value: "No", label: "KYC" },
+  { value: "No", label: "Registration" },
+  { value: "1.3%", label: "Fee" },
 ];
 
 export default function Clients() {

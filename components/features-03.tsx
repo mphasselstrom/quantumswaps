@@ -25,8 +25,8 @@ export default function Features03() {
 
           {/* Section header */}
           <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
-            <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">More Than Just a Swap API</h2>
-            <p className="text-lg text-slate-400">Our complete swap solution combines enterprise-grade infrastructure with developer-friendly endpoints, giving your application powerful swap capabilities with minimal integration effort.</p>
+            <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">Supports Your Favorite Chain</h2>
+            <p className="text-lg text-slate-400">Seamlessly swap assets across major blockchains like Solana, Bitcoin, Ethereum and more. Our unified API provides optimized routing and deep liquidity for all your cross-chain needs.</p>
           </div>
 
           <div className="max-w-3xl mx-auto">

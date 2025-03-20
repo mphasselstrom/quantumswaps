@@ -105,7 +105,7 @@ export default function Testimonials() {
                     unmount={false}
                     appear={true}
                   >
-                    <div className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60">{item.quote}</div>
+                    <div className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 mb-6">{item.quote}</div>
                   </Transition>
                 ))}
 
