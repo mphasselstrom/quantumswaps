@@ -1,6 +1,6 @@
 export const metadata = {
-  title: 'Quantum API - Low-cost, Instant Cross Chain and DeFi Swaps',
-  description: 'The most comprehensive swap API for Solana DeFi liquidity and seamless cross-chain transactions.',
+  title: 'Quantum API - Low-cost, Instant Cross Chain Swaps',
+  description: 'The most comprehensive swap API for Solana liquidity and seamless cross-chain transactions.',
 }
 
 import Hero from '@/components/hero'

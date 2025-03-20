@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'About Quantum - Our Mission and Team',
-  description: 'Learn about QuantumSwap\'s mission to revolutionize cross-chain swaps and meet the team behind our innovative DeFi solutions.',
+  description: 'Learn about QuantumSwap\'s mission to revolutionize cross-chain swaps and meet the team behind our innovative solutions.',
 }
 
 import Hero from '@/components/hero-about'

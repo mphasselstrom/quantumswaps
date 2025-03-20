@@ -1,6 +1,6 @@
 # QuantumSwap
 
-A high-performance API for low-cost, instant cross-chain and DeFi swaps.
+A high-performance API for low-cost, instant cross-chain swaps.
 
 ## Features
 

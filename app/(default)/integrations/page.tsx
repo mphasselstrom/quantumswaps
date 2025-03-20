@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'Quantum Integrations - Connect With Leading Blockchain Networks',
-  description: 'Explore QuantumSwap\'s integrations with leading blockchain networks and DeFi protocols for seamless cross-chain transactions.',
+  description: 'Explore QuantumSwap\'s integrations with leading blockchain networks and protocols for seamless cross-chain transactions.',
 }
 
 import IntegrationsSection from './integrations-section'

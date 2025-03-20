@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'Sign Up - Quantum',
-  description: 'Create your Quantum account to access our powerful cross-chain swap API and start integrating DeFi solutions.',
+  description: 'Create your Quantum account to access our powerful cross-chain swap API and start integrating solutions.',
 }
 
 import Link from 'next/link'

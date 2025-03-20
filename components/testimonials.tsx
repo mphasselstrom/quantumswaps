@@ -27,7 +27,7 @@ export default function Testimonials() {
       img: TestimonialImg01,
       quote: "The swap API's ability to capture pending transactions is a game-changer. If a user initiates a swap and network conditions change, the API automatically adjusts for optimal execution. The flexibility to select between different liquidity sources is invaluable.",
       name: 'Jessie Thompson',
-      role: 'DeFi Wallet CTO'
+      role: 'Wallet CTO'
     },
     {
       img: TestimonialImg02,

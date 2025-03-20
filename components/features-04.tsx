@@ -50,7 +50,7 @@ export default function Features04() {
                     </svg>
                     <h4 className="font-medium text-slate-50">40,000+ Trading Pairs</h4>
                   </div>
-                  <p className="text-sm text-slate-400">Access the most comprehensive selection of asset pairs available in the DeFi ecosystem.</p>
+                  <p className="text-sm text-slate-400">Access the most comprehensive selection of asset pairs available in the ecosystem.</p>
                 </div>
                 {/* Feature */}
                 <div>
@@ -116,7 +116,7 @@ export default function Features04() {
                     </svg>
                     <h4 className="font-medium text-slate-50">Trusted by Leading Brands</h4>
                   </div>
-                  <p className="text-sm text-slate-400">Powering cross-chain solutions for the biggest names in Web3 and DeFi.</p>
+                  <p className="text-sm text-slate-400">Powering cross-chain solutions for the biggest names in Web3.</p>
                 </div>
                 {/* Feature */}
                 <div>
