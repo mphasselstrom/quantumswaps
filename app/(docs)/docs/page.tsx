@@ -28,10 +28,10 @@ export default function DocsPage() {
           
           {/* Buttons moved into middle section */}
           <div className="flex space-x-4 my-10">
-            <button className="bg-slate-800/60 px-3 py-1 rounded-lg border border-slate-700 hover:bg-slate-700/80 transition duration-150 ease-in-out cursor-pointer">
+            <button className="bg-slate-800/60 px-3 py-1 rounded-lg border border-slate-700 hover:bg-slate-700/80 transition duration-150 ease-in-out cursor-pointer text-sm text-white">
               Copy Cursor Command
             </button>
-            <button className="bg-slate-800/60 px-3 py-1 rounded-lg border border-slate-700 hover:bg-slate-700/80 transition duration-150 ease-in-out cursor-pointer">
+            <button className="bg-slate-800/60 px-3 py-1 rounded-lg border border-slate-700 hover:bg-slate-700/80 transition duration-150 ease-in-out cursor-pointer text-sm text-white">
               Get AI Ready Docs
             </button>
           </div>
