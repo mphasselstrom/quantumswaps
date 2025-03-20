@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Highlighter, { HighlighterItem } from './highlighter'
 
-import FeatureImg04 from '@/public/images/feature-image-04.png'
+import FeatureImg04 from '@/public/images/feature-image-04-1.png'
 
 export default function Features03() {
   return (
