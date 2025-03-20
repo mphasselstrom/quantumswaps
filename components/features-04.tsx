@@ -48,7 +48,7 @@ export default function Features04() {
                     <svg className="shrink-0 fill-slate-300" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
                       <path d="M6.974 14c-.3 0-.7-.2-.9-.5l-2.2-3.7-2.1 2.8c-.3.4-1 .5-1.4.2-.4-.3-.5-1-.2-1.4l3-4c.2-.3.5-.4.9-.4.3 0 .6.2.8.5l2 3.3 3.3-8.1c0-.4.4-.7.8-.7s.8.2.9.6l4 8c.2.5 0 1.1-.4 1.3-.5.2-1.1 0-1.3-.4l-3-6-3.2 7.9c-.2.4-.6.6-1 .6Z" />
                     </svg>
-                    <h4 className="font-medium text-slate-50">40,000+ Trading Pairs</h4>
+                    <h4 className="font-medium text-slate-50">700,000+ Trading Pairs</h4>
                   </div>
                   <p className="text-sm text-slate-400">Access the most comprehensive selection of asset pairs available in the ecosystem.</p>
                 </div>

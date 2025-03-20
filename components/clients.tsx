@@ -3,7 +3,7 @@ import Particles from './particles'
 
 // Stats for swaps API
 const stats = [
-  { value: "+40k", label: "Pairs" },
+  { value: "+700k", label: "Pairs" },
   { value: "150+", label: "Blockchains" },
   { value: "99.9%", label: "Uptime" },
   { value: "No", label: "KYC" },
