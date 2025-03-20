@@ -1,6 +1,6 @@
 export const metadata = {
-  title: 'Pricing - Stellar',
-  description: 'Page description',
+  title: 'Quantum Pricing - Transparent and Competitive Rates',
+  description: 'View QuantumSwap\'s transparent pricing plans for our cross-chain swap API with competitive rates and no hidden fees.',
 }
 
 import PricingSection from './pricing-section'
