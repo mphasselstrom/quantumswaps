@@ -24,12 +24,8 @@ export default function DocSidebar() {
     }
   }, [])
 
-  const isActive = (path: string) => {
-    return pathname === path
-  }
-  
   const isHashActive = (hash: string) => {
-    return pathname === '/documentation' && currentHash === hash
+    return currentHash === hash
   }
 
   return (
@@ -44,39 +40,24 @@ export default function DocSidebar() {
             <h5 className="mb-8 lg:mb-3 font-semibold text-slate-200">Guides</h5>
             <ul className="space-y-6 lg:space-y-2">
               <li>
-                <Link href="/documentation" className={`${isActive('/documentation') && !currentHash ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'}`}>
+                <a href="#introduction" className={`${isHashActive('#introduction') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
                   Introduction
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/documentation/quickstart" className={`${isActive('/documentation/quickstart') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'}`}>
+                <a href="#quickstart" className={`${isHashActive('#quickstart') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
                   Quickstart
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/documentation/sdks" className={`${isActive('/documentation/sdks') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'}`}>
+                <a href="#sdks" className={`${isHashActive('#sdks') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
                   SDKs
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/documentation/authentication" className={`${isActive('/documentation/authentication') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'}`}>
-                  Authentication
-                </Link>
-              </li>
-              <li>
-                <Link href="/documentation/pagination" className={`${isActive('/documentation/pagination') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'}`}>
-                  Pagination
-                </Link>
-              </li>
-              <li>
-                <Link href="/documentation/errors" className={`${isActive('/documentation/errors') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'}`}>
-                  Errors
-                </Link>
-              </li>
-              <li>
-                <Link href="/documentation/webhooks" className={`${isActive('/documentation/webhooks') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'}`}>
+                <a href="#webhooks" className={`${isHashActive('#webhooks') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
                   Webhooks
-                </Link>
+                </a>
               </li>
             </ul>
           </li>
@@ -84,44 +65,44 @@ export default function DocSidebar() {
             <h5 className="mb-8 lg:mb-3 font-semibold text-slate-200">API Endpoints</h5>
             <ul className="space-y-6 lg:space-y-2">
               <li>
-                <Link href="/documentation#currency-pairs" className={`${isHashActive('#currency-pairs') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'}`}>
+                <a href="#currency-pairs" className={`${isHashActive('#currency-pairs') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
                   Currency Pairs
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/documentation#quote-get" className={`${isHashActive('#quote-get') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'}`}>
+                <a href="#quote-get" className={`${isHashActive('#quote-get') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
                   Quote Get
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/documentation#quote-execute" className={`${isHashActive('#quote-execute') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'}`}>
+                <a href="#quote-execute" className={`${isHashActive('#quote-execute') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
                   Quote Execute
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/documentation#swap-status" className={`${isHashActive('#swap-status') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'}`}>
+                <a href="#swap-status" className={`${isHashActive('#swap-status') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
                   Swap Status
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/documentation#swaps-history" className={`${isHashActive('#swaps-history') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'}`}>
+                <a href="#swaps-history" className={`${isHashActive('#swaps-history') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
                   Swaps History
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/documentation#currencies-info" className={`${isHashActive('#currencies-info') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'}`}>
+                <a href="#currencies-info" className={`${isHashActive('#currencies-info') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
                   Currencies Info
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/documentation#webhook-create" className={`${isHashActive('#webhook-create') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'}`}>
+                <a href="#webhook-create" className={`${isHashActive('#webhook-create') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
                   Create Webhook
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/documentation#webhook-get" className={`${isHashActive('#webhook-get') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'}`}>
+                <a href="#webhook-get" className={`${isHashActive('#webhook-get') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
                   Get Webhook
-                </Link>
+                </a>
               </li>
             </ul>
           </li>

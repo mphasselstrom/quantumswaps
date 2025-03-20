@@ -3,20 +3,13 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import DocSidebar from '@/components/documentation/sidebar'
-import TableOfContents from '@/components/documentation/toc'
 
 export default function Documentation() {
   const tocItems = [
-    { id: 'getting-started', title: 'Getting started', level: 1 },
-    { id: 'api-interface', title: 'API interface', level: 1 },
-    { id: 'currency-pairs', title: 'Currency Pairs', level: 2 },
-    { id: 'quote-get', title: 'Quote Get', level: 2 },
-    { id: 'quote-execute', title: 'Quote Execute', level: 2 },
-    { id: 'swap-status', title: 'Swap Status', level: 2 },
-    { id: 'swaps-history', title: 'Swaps History', level: 2 },
-    { id: 'currencies-info', title: 'Get Currencies Info', level: 2 },
-    { id: 'webhook-create', title: 'Create Webhook', level: 2 },
-    { id: 'webhook-get', title: 'Get Webhook', level: 2 },
+    { id: 'introduction', title: 'Introduction', level: 1 },
+    { id: 'quickstart', title: 'Quickstart', level: 1 },
+    { id: 'errors', title: 'Errors', level: 1 },
+    { id: 'webhooks', title: 'Webhooks', level: 1 },
   ]
   
   return (
@@ -24,14 +17,25 @@ export default function Documentation() {
       {/* Left sidebar */}
       <DocSidebar />
 
-      {/* Right sidebar - Table of contents */}
-      <TableOfContents items={tocItems} />
+      {/* Right sidebar - Buttons */}
+      <div className="fixed z-20 top-[3.8125rem] bottom-0 right-[max(0px,calc(50%-45rem))] w-[19.5rem] py-10 overflow-y-auto hidden xl:block">
+        <div className="px-8">
+          <div className="space-y-4">
+            <button className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+              Copy Cursor Command
+            </button>
+            <button className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors">
+              Get AI Ready Docs
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Main content */}
       <main className="max-w-3xl mx-auto relative z-20 px-4 sm:px-6 xl:px-8 pb-16 lg:pb-24 pt-24">
 
         <div className="prose prose-invert prose-slate max-w-none">
-          <h2 id="getting-started" className="text-2xl font-bold tracking-tight text-white scroll-mt-24 mt-10 lg:mt-12">Getting started</h2>
+          <h2 id="introduction" className="text-2xl font-bold tracking-tight text-white scroll-mt-24 mt-10 lg:mt-12">Introduction</h2>
           <p className="mt-4 text-slate-300">
             To get started, create a new application in your developer settings, then read about how to make requests 
             for the resources you need to access using our HTTP APIs or dedicated client SDKs. When your integration 
@@ -47,227 +51,65 @@ export default function Documentation() {
             </Link>
           </div>
           
-          <h2 id="api-interface" className="text-2xl font-bold tracking-tight text-white scroll-mt-24 mt-16">API interface</h2>
+          <h2 id="quickstart" className="text-2xl font-bold tracking-tight text-white scroll-mt-24 mt-16">Quickstart</h2>
+          <p className="mt-4 text-slate-300">
+            Follow these simple steps to make your first quantum swap:
+          </p>
           
-          <h3 id="currency-pairs" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Currency Pairs</h3>
+          <div className="mt-4 space-y-4">
+            <div className="flex">
+              <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold">1</div>
+              <div className="ml-4">
+                <p className="text-slate-300">Get your API key by contacting our team</p>
+              </div>
+            </div>
+            
+            <div className="flex">
+              <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold">2</div>
+              <div className="ml-4">
+                <p className="text-slate-300">Check available currency pairs</p>
+              </div>
+            </div>
+            
+            <div className="flex">
+              <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold">3</div>
+              <div className="ml-4">
+                <p className="text-slate-300">Get a quote for your swap</p>
+              </div>
+            </div>
+            
+            <div className="flex">
+              <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold">4</div>
+              <div className="ml-4">
+                <p className="text-slate-300">Execute the swap</p>
+              </div>
+            </div>
+          </div>
+          
+          <h2 id="errors" className="text-2xl font-bold tracking-tight text-white scroll-mt-24 mt-16">Errors</h2>
+          <p className="mt-4 text-slate-300">
+            The Quantum Swaps API uses conventional HTTP response codes to indicate the success or failure of an API request.
+          </p>
           
           <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-            <div className="px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-mono text-slate-200">POST /v1/currencies/pairs</span>
-            </div>
             <div className="p-4">
               <pre className="text-sm text-slate-300 font-mono">
-{`// Request
-{
-  from: string[], 
-  to: string[]
-}
-
-// Response
-{
-  "pairs": [
-    {
-      fromCurrency: String,
-      fromNetwork: String,
-      toCurrency: String,
-      toNetwork: String,
-    }
-  ]
-}`}
+{`// HTTP Status Codes
+200 - OK                 // Everything worked as expected
+400 - Bad Request        // Missing required parameters or validation failed
+401 - Unauthorized       // Invalid API key
+404 - Not Found          // The requested resource doesn't exist
+429 - Too Many Requests  // You've hit rate limits
+500 - Server Error       // Something went wrong on our end`}
               </pre>
             </div>
           </div>
           
-          <div className="mt-6 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-            <div className="px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-mono text-slate-200">Alternative Endpoints</span>
-            </div>
-            <div className="p-4">
-              <pre className="text-sm text-slate-300 font-mono">
-{`POST /v1/networks/inbound
-POST /v1/networks/outbound
-POST /v1/currencies/inbound
-POST /v1/currencies/outbound
-POST /v1/currencies/supported_networks`}
-              </pre>
-            </div>
-          </div>
-          
-          <h3 id="quote-get" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Quote Get</h3>
-          
-          <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-            <div className="px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-mono text-slate-200">POST /v1/swap/quote</span>
-            </div>
-            <div className="p-4">
-              <pre className="text-sm text-slate-300 font-mono">
-{`// Request
-{
-  fromCurrency: String,
-  fromNetwork: String,
-  toCurrency: String,
-  toNetwork: String,
-  fromWalletAddress: String,
-  fromWalletAddressExtra: String,
-  fromAmount: String,  // Either this or toAmount required
-  toAmount: String     // Either this or fromAmount required
-}
-
-// Response
-{
-  exchangeRate: String,
-  fromAmount: String,
-  toAmount: String,
-  networkFee: String,
-  fromCurrency: String,
-  fromNetwork: String,
-  toCurrency: String,
-  toNetwork: String,
-  expiresIn: String,
-  signature: String
-}`}
-              </pre>
-            </div>
-          </div>
-          
-          <h3 id="quote-execute" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Quote Execute</h3>
-          
-          <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-            <div className="px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-mono text-slate-200">POST /v1/swap/execute</span>
-              <span className="ml-3 text-xs py-0.5 px-2 bg-yellow-200 text-yellow-800 rounded-full">Authorization required</span>
-            </div>
-            <div className="p-4">
-              <pre className="text-sm text-slate-300 font-mono">
-{`// Request
-{
-  signature: String,
-  toWalletAddress: String,  
-  toWalletAddressExtra: String, 
-  refundWalletAddress: String,
-  refundWalletAddressExtra: String,
-  externalId: String
-}
-
-// Response
-{
-  id: String,
-  status: String,
-  fromAmount: String,
-  toAmount: String,
-  fromCurrency: String,
-  toCurrency: String,
-  createdAt: String,
-  updatedAt: String
-}`}
-              </pre>
-            </div>
-          </div>
-          
-          <h3 id="swap-status" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Swap Status</h3>
-          
-          <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-            <div className="px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-mono text-slate-200">POST /v1/swap/status</span>
-            </div>
-            <div className="p-4">
-              <pre className="text-sm text-slate-300 font-mono">
-{`// Request
-{
-  id: String
-}
-
-// Response
-{
-  id: String,
-  status: String,
-  fromAmount: String,
-  toAmount: String,
-  fromCurrency: String,
-  toCurrency: String,
-  createdAt: String,
-  updatedAt: String
-}`}
-              </pre>
-            </div>
-          </div>
-          
-          <h3 id="swaps-history" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Swaps History</h3>
-          
-          <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-            <div className="px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-mono text-slate-200">POST /v1/swap/history</span>
-              <span className="ml-3 text-xs py-0.5 px-2 bg-slate-700 text-slate-300 rounded-full">Paginated</span>
-            </div>
-            <div className="p-4">
-              <pre className="text-sm text-slate-300 font-mono">
-{`// Request
-{
-  externalId: String,
-  createdBeforeDate: Date,
-  createdAfterDate: Date,
-  fromWalletAddress: String,
-  fromWalletAddressExtra: String,
-  toWalletAddress: String,
-  toWalletAddressExtra: String,
-  limit: Number,
-  offset: Number,
-  currency: String,
-  network: String
-}
-
-// Response
-{
-  data: [
-    {
-      id: String,
-      status: String,
-      fromAmount: String,
-      toAmount: String,
-      fromCurrency: String,
-      toCurrency: String,
-      createdAt: String,
-      updatedAt: String
-    }
-  ],
-  limit: Number,
-  offset: Number,
-  total: Number
-}`}
-              </pre>
-            </div>
-          </div>
-          
-          <h3 id="currencies-info" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Get Currencies Info</h3>
-          
-          <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-            <div className="px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-mono text-slate-200">POST /v1/currencies/info</span>
-            </div>
-            <div className="p-4">
-              <pre className="text-sm text-slate-300 font-mono">
-{`// Request
-{
-  currencies: String[],
-  networks: String[]
-}
-
-// Response
-{
-  "currencies": [
-    {
-      currency: String,
-      network: String,
-      name: String,
-      address: String,
-      decimals: Number,
-      logoURI: String
-    }
-  ]
-}`}
-              </pre>
-            </div>
-          </div>
+          <h2 id="webhooks" className="text-2xl font-bold tracking-tight text-white scroll-mt-24 mt-16">Webhooks</h2>
+          <p className="mt-4 text-slate-300">
+            Webhooks allow you to receive real-time updates about swap status changes. 
+            Configure webhooks to notify your services when important events occur.
+          </p>
           
           <h3 id="webhook-create" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Create Webhook</h3>
           
