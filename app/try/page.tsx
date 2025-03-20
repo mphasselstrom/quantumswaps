@@ -79,13 +79,16 @@ function SwapPageContent() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
         <div className="pt-32 pb-12 md:pt-40 md:pb-20">
           <div className="max-w-3xl mx-auto text-center pb-12">
-            <h1 className="h1 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">Try Quantum</h1>
+            <div className="inline-flex items-center justify-center p-1 mb-4 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+              <span className="bg-slate-900 rounded-full px-3 py-1 text-xs font-semibold text-slate-200">BETA</span>
+            </div>
+            <h1 className="h1 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 pb-4 font-bold">Try Quantum</h1>
             <p className="text-lg text-slate-400">Swap between any chain at lightning speed and low cost</p>
           </div>
+
 
           {/* Swap Widget */}
           <div className="max-w-lg mx-auto mt-6">
