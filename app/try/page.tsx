@@ -700,8 +700,10 @@ function SwapWidget({
       setIsLoading(true);
       setError(null);
       
-      // Construct a Solana transaction using the depositAddress and amount from the transaction data
-      const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+      // Use Helius endpoint with the API key that's already set up elsewhere in the app
+      const heliusRpcEndpoint = 'https://rpc.helius.xyz/?api-key=03235acc-6482-4938-a577-166d6b26170d';
+      console.log('Using Helius RPC endpoint');
+      const connection = new Connection(heliusRpcEndpoint, 'confirmed');
       
       // Parse the deposit address as a PublicKey
       const depositPubkey = new PublicKey(transactionData.depositAddress);
@@ -717,9 +719,30 @@ function SwapWidget({
       );
       
       // Set a recent blockhash
-      const { blockhash } = await connection.getRecentBlockhash();
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = fromPubkey;
+      try {
+        console.log('Fetching recent blockhash from Helius...');
+        const { blockhash } = await connection.getRecentBlockhash();
+        console.log('Got blockhash from Helius:', blockhash);
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = fromPubkey;
+      } catch (blockHashError) {
+        console.error('Error getting recent blockhash from Helius:', blockHashError);
+        
+        // Fallback to using Phantom's getRecentBlockhash if connection fails
+        console.log('Attempting to use Phantom to get recent blockhash...');
+        try {
+          // Phantom wallet can provide a recent blockhash directly
+          const { blockhash } = await window.solana.request({
+            method: 'getRecentBlockhash',
+          });
+          console.log('Got blockhash from Phantom:', blockhash);
+          transaction.recentBlockhash = blockhash;
+          transaction.feePayer = fromPubkey;
+        } catch (phantomBlockhashError) {
+          console.error('Phantom blockhash error:', phantomBlockhashError);
+          throw new Error('Failed to get recent blockhash from any source');
+        }
+      }
       
       console.log('Sending SOL transaction:', {
         from: fromPubkey.toString(),
@@ -729,7 +752,8 @@ function SwapWidget({
       });
       
       try {
-        // Sign and send the transaction using Phantom
+        // Sign the transaction using Phantom
+        console.log('Requesting transaction signature from Phantom...');
         const signedTransaction = await window.solana.signTransaction(transaction);
         
         console.log('Transaction signed successfully');
@@ -737,7 +761,8 @@ function SwapWidget({
         // Set status to processing
         setTransactionStatus('processing');
         
-        // Send the signed transaction to the Solana network
+        // Send the signed transaction to the Solana network through Helius
+        console.log('Sending raw transaction to Solana network via Helius...');
         const signature = await connection.sendRawTransaction(signedTransaction.serialize());
         
         console.log('Transaction sent with signature:', signature);
@@ -745,19 +770,20 @@ function SwapWidget({
         // Update UI with transaction signature
         setTransactionSignature(signature);
         
-        // Poll for confirmation
+        // Poll for confirmation using Helius connection
+        console.log('Setting up confirmation polling with Helius...');
         const confirmInterval = setInterval(async () => {
           try {
             const confirmation = await connection.confirmTransaction(signature);
             if (confirmation) {
               clearInterval(confirmInterval);
-              console.log('Transaction confirmed:', confirmation);
+              console.log('Transaction confirmed via Helius:', confirmation);
               setTransactionStatus('success');
               console.log('Setting isLoading=false in confirmation callback');
               setIsLoading(false);
             }
           } catch (err) {
-            console.error('Error checking confirmation:', err);
+            console.error('Error checking confirmation via Helius:', err);
           }
         }, 2000);
         
