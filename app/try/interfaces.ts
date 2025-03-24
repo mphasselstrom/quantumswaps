@@ -18,6 +18,7 @@ export interface SwapWidgetProps {
   isConnected: boolean
   connectWallet: () => Promise<string | null>
   userAccount: string
+  setWalletVisible: (open: boolean) => void
 }
 
 export interface CurrencySelectorProps {

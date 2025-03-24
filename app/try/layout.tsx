@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 
 import AOS from 'aos'
 import 'aos/dist/aos.css'
+import '@solana/wallet-adapter-react-ui/styles.css'
 
 import Header from '@/components/ui/header'
 import Footer from '@/components/ui/footer'

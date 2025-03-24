@@ -1,10 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { ChangeHeroCurrency, ChangeHeroResponse } from '../types/changeHero'
 import * as changeHeroService from '../services/changeHeroService'
 import { Currency, SwapWidgetProps, CurrencySelectorProps } from './interfaces'
+import { ConnectionProvider, WalletProvider, useWallet, useConnection } from '@solana/wallet-adapter-react'
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
+import { clusterApiUrl, Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js'
+import { WalletModalProvider, useWalletModal } from '@solana/wallet-adapter-react-ui'
 
 // Dynamically import components to avoid SSR issues
 const DynamicCurrencySelector = dynamic(() => Promise.resolve(CurrencySelector), { ssr: false })
@@ -19,8 +23,20 @@ declare global {
 }
 
 export default function TryPage() {
+  // Set up Solana network and wallet
+  const network = WalletAdapterNetwork.Mainnet
+  // Use a more reliable RPC endpoint with the user's Helius API key
+  const endpoint = useMemo(() => 'https://rpc.helius.xyz/?api-key=03235acc-6482-4938-a577-166d6b26170d', [])
+  const wallets = useMemo(() => [], [])
+
   return (
-    <SwapPageContent />
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={wallets} autoConnect>
+        <WalletModalProvider>
+          <SwapPageContent />
+        </WalletModalProvider>
+      </WalletProvider>
+    </ConnectionProvider>
   )
 }
 
@@ -29,12 +45,27 @@ function SwapPageContent() {
   const [toModalOpen, setToModalOpen] = useState(false)
   const [fromCurrency, setFromCurrency] = useState<Currency | null>(null)
   const [toCurrency, setToCurrency] = useState<Currency | null>(null)
-  const [isConnected, setIsConnected] = useState(false)
-  const [userAccount, setUserAccount] = useState('')
   const [currencies, setCurrencies] = useState<Currency[]>([])
   const [availableToCurrencies, setAvailableToCurrencies] = useState<Currency[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // Use Solana wallet adapter hooks
+  const { wallet, connect, disconnect, connected, publicKey, select } = useWallet()
+  const { visible, setVisible } = useWalletModal()
+  const isConnected = connected
+  const userAccount = publicKey?.toString() || ''
+  
+  // Log wallet information for debugging
+  useEffect(() => {
+    console.log('Wallet adapter status:', {
+      connected,
+      wallet: wallet ? 'Available' : 'Not available',
+      publicKey: publicKey?.toString() || 'None',
+      windowSolana: window.solana ? 'Available' : 'Not available',
+      isPhantom: window.solana?.isPhantom ? 'Yes' : 'No'
+    });
+  }, [connected, wallet, publicKey]);
   
   // Fetch currencies on component mount
   useEffect(() => {
@@ -65,10 +96,18 @@ function SwapPageContent() {
         
         setCurrencies(mappedCurrencies);
         
-        // Set default from currency to ETH if available
+        // Find SOL and ETH currencies
+        const solCurrency = mappedCurrencies.find(c => c.symbol.toLowerCase() === 'sol');
         const ethCurrency = mappedCurrencies.find(c => c.symbol.toLowerCase() === 'eth');
-        if (ethCurrency) {
-          setFromCurrency(ethCurrency);
+        
+        // Set default from currency to SOL if available
+        if (solCurrency) {
+          setFromCurrency(solCurrency);
+        }
+        
+        // Set default to currency to ETH if available and not the same as from currency
+        if (ethCurrency && (!solCurrency || ethCurrency.id !== solCurrency.id)) {
+          setToCurrency(ethCurrency);
         }
         
       } catch (err) {
@@ -90,13 +129,13 @@ function SwapPageContent() {
       const availableToList = currencies.filter((c: any) => c.id !== fromCurrency.id);
       setAvailableToCurrencies(availableToList);
       
-      // Set default "to" currency to SOL if available and not already selected as "from"
-      if (!toCurrency) {
-        const solCurrency = availableToList.find(c => c.symbol.toLowerCase() === 'sol');
-        if (solCurrency) {
-          setToCurrency(solCurrency);
+      // If toCurrency is null or the same as fromCurrency, try to set ETH as default
+      if (!toCurrency || toCurrency.id === fromCurrency.id) {
+        const ethCurrency = availableToList.find(c => c.symbol.toLowerCase() === 'eth');
+        if (ethCurrency) {
+          setToCurrency(ethCurrency);
         } else if (availableToList.length > 0) {
-          // If SOL is not available, set the first available currency
+          // If ETH is not available, set the first available currency
           setToCurrency(availableToList[0]);
         }
       }
@@ -105,187 +144,28 @@ function SwapPageContent() {
     }
   }, [fromCurrency, currencies, toCurrency]);
 
-  useEffect(() => {
-    // Check if wallet is already connected on page load
-    const checkConnection = async () => {
-      const walletType = localStorage.getItem('walletType');
-      const isWalletConnected = localStorage.getItem('walletConnected') === 'true';
-      
-      if (!isWalletConnected) return;
-      
-      // Check Ethereum wallet
-      if (walletType === 'ethereum' && window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          if (accounts.length > 0) {
-            setUserAccount(accounts[0]);
-            setIsConnected(true);
-          } else {
-            // If no accounts found but flag exists, clear it
-            localStorage.removeItem('walletConnected');
-            localStorage.removeItem('walletType');
-          }
-        } catch (error) {
-          console.error("Error checking Ethereum wallet connection:", error);
-          localStorage.removeItem('walletConnected');
-          localStorage.removeItem('walletType');
-        }
-      } 
-      // Check Solana/Phantom wallet
-      else if (walletType === 'solana' && window.solana) {
-        try {
-          const isPhantomConnected = window.solana.isConnected;
-          
-          if (isPhantomConnected) {
-            const publicKey = window.solana.publicKey.toString();
-            setUserAccount(publicKey);
-            setIsConnected(true);
-          } else {
-            // Try to reconnect
-            try {
-              const { publicKey } = await window.solana.connect({ onlyIfTrusted: true });
-              setUserAccount(publicKey.toString());
-              setIsConnected(true);
-            } catch (reconnectError) {
-              console.error("Failed to reconnect to Phantom wallet:", reconnectError);
-              localStorage.removeItem('walletConnected');
-              localStorage.removeItem('walletType');
-            }
-          }
-        } catch (error) {
-          console.error("Error checking Phantom wallet connection:", error);
-          localStorage.removeItem('walletConnected');
-          localStorage.removeItem('walletType');
-        }
-      } else {
-        // Wallet type stored but provider not available
-        localStorage.removeItem('walletConnected');
-        localStorage.removeItem('walletType');
-      }
-    };
-    
-    checkConnection();
-    
-    // Setup event listeners for wallet account changes
-    if (typeof window !== 'undefined') {
-      // Ethereum account change listener
-      if (window.ethereum) {
-        window.ethereum.on('accountsChanged', (accounts: string[]) => {
-          if (accounts.length === 0) {
-            // User disconnected wallet
-            disconnectWallet();
-          } else {
-            setUserAccount(accounts[0]);
-            setIsConnected(true);
-            localStorage.setItem('walletConnected', 'true');
-            localStorage.setItem('walletType', 'ethereum');
-          }
-        });
-      }
-      
-      // Phantom/Solana disconnect listener (if available)
-      if (window.solana && window.solana.on) {
-        window.solana.on('disconnect', () => {
-          disconnectWallet();
-        });
-        
-        window.solana.on('accountChanged', () => {
-          // Refresh the page when accounts change for Phantom to ensure we have the latest state
-          window.location.reload();
-        });
-      }
-    }
-    
-    return () => {
-      // Clean up event listeners
-      if (typeof window !== 'undefined') {
-        if (window.ethereum) {
-          window.ethereum.removeAllListeners('accountsChanged');
-        }
-        if (window.solana && window.solana.removeAllListeners) {
-          window.solana.removeAllListeners('disconnect');
-          window.solana.removeAllListeners('accountChanged');
-        }
-      }
-    };
-  }, []);
-
   const connectWallet = async () => {
-    // If we have a selected from currency, determine which wallet to connect
-    const isSolana = fromCurrency && fromCurrency.network.toLowerCase().includes('solana');
-    
-    // Connect Phantom wallet for Solana
-    if (isSolana && typeof window !== 'undefined' && window.solana) {
-      try {
-        const phantom = window.solana;
+    try {
+      // Check if Phantom is available
+      if (window.solana && window.solana.isPhantom) {
+        // Open wallet modal to let the user connect
+        setVisible(true);
         
-        if (!phantom.isPhantom) {
-          alert("Your Solana wallet doesn't seem to be Phantom. Please install Phantom wallet for the best experience.");
-          return null;
-        }
-        
-        // Connect to Phantom wallet
-        const { publicKey } = await phantom.connect();
-        const solanaAddress = publicKey.toString();
-        setUserAccount(solanaAddress);
-        setIsConnected(true);
-        localStorage.setItem('walletConnected', 'true');
-        localStorage.setItem('walletType', 'solana');
-        
-        console.log('Connected to Phantom wallet with address:', solanaAddress);
-        return solanaAddress;
-      } catch (error) {
-        console.error("Error connecting to Phantom wallet:", error);
-        alert("Failed to connect Phantom wallet: " + (error as Error).message);
-      }
-    } 
-    // Connect MetaMask or other Ethereum wallets
-    else if (typeof window !== 'undefined' && window.ethereum) {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const ethAddress = accounts[0];
-        setUserAccount(ethAddress);
-        setIsConnected(true);
-        localStorage.setItem('walletConnected', 'true');
-        localStorage.setItem('walletType', 'ethereum');
-        
-        return ethAddress;
-      } catch (error) {
-        console.error("Error connecting to wallet:", error);
-        alert("Failed to connect wallet: " + (error as Error).message);
-      }
-    } else {
-      if (isSolana) {
-        alert("No Phantom wallet detected. Please install Phantom wallet for Solana transactions.");
+        return publicKey?.toString() || null;
       } else {
-        alert("No Ethereum wallet detected. Please install MetaMask or another Web3 wallet.");
+        alert("Please install Phantom wallet for the best experience.");
+        window.open('https://phantom.app/', '_blank');
+        return null;
       }
+    } catch (error) {
+      console.error("Error connecting to Phantom wallet:", error);
+      alert("Failed to connect Phantom wallet. Please make sure your wallet is unlocked.");
     }
     return null;
   };
 
   const disconnectWallet = () => {
-    // Get the wallet type before clearing
-    const walletType = localStorage.getItem('walletType');
-    
-    // Reset state
-    setUserAccount('');
-    setIsConnected(false);
-    
-    // Clear localStorage
-    localStorage.removeItem('walletConnected');
-    localStorage.removeItem('walletType');
-    
-    // If it's a Phantom wallet, try to disconnect
-    if (walletType === 'solana' && window.solana && window.solana.disconnect) {
-      try {
-        window.solana.disconnect();
-      } catch (error) {
-        console.error('Error disconnecting from Phantom wallet:', error);
-      }
-    }
-    
-    console.log("Wallet disconnected from application");
+    disconnect();
   };
 
   const handleSelectFromCurrency = (currency: Currency) => {
@@ -335,7 +215,7 @@ function SwapPageContent() {
           <div className="max-w-lg mx-auto mb-6">
             {!isConnected ? (
               <button 
-                onClick={connectWallet}
+                onClick={() => setVisible(true)}
                 className="w-full bg-slate-800 text-white font-bold py-3 px-4 rounded-lg border border-slate-700 hover:bg-slate-700 transition duration-150 ease-in-out flex items-center justify-center space-x-2"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -410,6 +290,7 @@ function SwapPageContent() {
                   isConnected={isConnected}
                   connectWallet={connectWallet}
                   userAccount={userAccount}
+                  setWalletVisible={setVisible}
                 />
               </div>
             </div>
@@ -450,7 +331,8 @@ function SwapWidget({
   swapCurrencies,
   isConnected,
   connectWallet,
-  userAccount
+  userAccount,
+  setWalletVisible
 }: SwapWidgetProps) {
   const [fromAmount, setFromAmount] = useState<string>('');
   const [toAmount, setToAmount] = useState<string>('');
@@ -465,6 +347,10 @@ function SwapWidget({
   const [transactionDetails, setTransactionDetails] = useState<any>(null);
   const [isSendingTransaction, setIsSendingTransaction] = useState(false);
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
+
+  // Get Solana wallet and connection
+  const { wallet, publicKey } = useWallet();
+  const { connection } = useConnection();
 
   // Get minimum exchange amount when currencies change
   useEffect(() => {
@@ -571,7 +457,7 @@ function SwapWidget({
 
   const initiateSwap = async () => {
     if (!isConnected) {
-      await connectWallet();
+      setWalletVisible(true);
       return;
     }
 
@@ -647,78 +533,64 @@ function SwapWidget({
       setIsSendingTransaction(true);
       setErrorMessage('');
       
-      // For Ethereum-based currencies (using browser's ethereum provider)
-      if (window.ethereum && fromCurrency.network.toLowerCase().includes('ethereum')) {
-        // Convert amount to Wei (1 ETH = 10^18 Wei)
-        const amount = transactionDetails.amountExpectedFrom;
-        const amountInWei = window.ethereum.request({ 
-          method: 'eth_getBalance', 
-          params: [userAccount, 'latest']
-        }).then(() => {
-          // This is just a placeholder to show we'd get the Wei conversion
-          return (parseFloat(amount) * 10**18).toString();
-        });
-        
-        // Create transaction object
-        const txParams = {
-          from: userAccount,
-          to: transactionDetails.payinAddress,
-          value: `0x${parseInt(await amountInWei).toString(16)}`, // Convert to hex
-          gas: '0x5208', // 21000 Gas limit for standard ETH transfers
-        };
-        
-        // Send transaction
-        const txHash = await window.ethereum.request({
-          method: 'eth_sendTransaction',
-          params: [txParams],
-        });
-        
-        setTransactionHash(txHash);
-      } 
-      // For Solana (using Phantom wallet)
-      else if (fromCurrency.network.toLowerCase().includes('solana')) {
-        // Check if Phantom wallet is available
-        const phantom = window.solana;
-        
-        if (!phantom) {
-          setErrorMessage('Phantom wallet not detected. Please install Phantom browser extension and try again.');
-          return;
-        }
-        
-        try {
-          // Ensure wallet is connected
-          if (!phantom.isConnected) {
-            await phantom.connect();
-          }
+      // Check if wallet is available and connected
+      if (!wallet || !publicKey) {
+        setErrorMessage('Wallet not connected. Please connect your wallet first.');
+        return;
+      }
+      
+      try {
+        // Check if we're dealing with Solana
+        if (fromCurrency.network.toLowerCase().includes('solana')) {
+          // Create a Solana transaction
+          const transaction = new Transaction();
           
-          // We can't use actual web3.js here, so we'll use Phantom's direct transfer method
-          // This is a simplified approach - in production, you'd use @solana/web3.js
-          
-          // Create a transfer request to the destination address
-          const transferParams = {
-            to: transactionDetails.payinAddress,
-            lamports: parseFloat(transactionDetails.amountExpectedFrom) * 1000000000 // Convert SOL to lamports (1 SOL = 10^9 lamports)
-          };
-          
-          // Send the transaction
-          console.log('Sending Solana transaction with params:', transferParams);
-          
-          // Using Phantom's direct transfer method
-          const signature = await phantom.request({
-            method: 'transfer',
-            params: transferParams
+          // Add the transfer instruction
+          const transferInstruction = SystemProgram.transfer({
+            fromPubkey: publicKey,
+            toPubkey: new PublicKey(transactionDetails.payinAddress),
+            lamports: parseFloat(transactionDetails.amountExpectedFrom) * LAMPORTS_PER_SOL
           });
           
-          console.log('Transaction sent with signature:', signature);
-          setTransactionHash(signature);
-          setErrorMessage(''); // Clear any previous errors
+          transaction.add(transferInstruction);
           
-        } catch (phantomError: any) {
-          console.error('Phantom wallet error:', phantomError);
-          setErrorMessage(`Phantom wallet error: ${phantomError.message || 'Could not send transaction'}`);
+          try {
+            // Get the latest blockhash
+            const { blockhash } = await connection.getLatestBlockhash();
+            transaction.recentBlockhash = blockhash;
+            transaction.feePayer = publicKey;
+            
+            // Try to send using the wallet adapter first
+            console.log('Sending transaction...');
+            let signature;
+            
+            // Try with direct Phantom connection if available (this will prompt for approval)
+            if (window.solana && window.solana.isPhantom) {
+              console.log('Using direct Phantom connection');
+              // Sign and send transaction using Phantom
+              signature = await window.solana.signAndSendTransaction(transaction);
+            } 
+            // Fall back to wallet adapter
+            else {
+              console.log('Using wallet adapter');
+              signature = await wallet.adapter.sendTransaction(transaction, connection);
+            }
+            
+            console.log('Transaction sent with signature:', signature);
+            setTransactionHash(signature);
+            setErrorMessage(''); // Clear any previous errors
+          } catch (blockhashError: any) {
+            console.error('Error getting blockhash or sending transaction:', blockhashError);
+            setErrorMessage(`Transaction error: ${blockhashError.message || 'Failed to send transaction'}`);
+          }
         }
-      } else {
-        setErrorMessage(`Direct wallet transfer for ${fromCurrency.symbol} is not supported yet. Please send funds manually to the address.`);
+        // If not Solana, we need a different approach (for future implementations)
+        else {
+          setErrorMessage('Only Solana transactions are currently supported through this interface.');
+        }
+      } catch (walletError: any) {
+        console.error('Wallet error:', walletError);
+        setErrorMessage(`Wallet error: ${walletError.message || 'Could not send transaction'}`);
       }
     } catch (error: any) {
       console.error('Error sending transaction:', error);
