@@ -125,10 +125,10 @@ function SwapPageContent() {
             
             // Set default to currency if available
             if (availableToCurrenciesList.length > 0) {
-              // Try to find BTC as default TO currency, otherwise use the first one
-              const btcCurrency = availableToCurrenciesList.find(c => c.symbol.toLowerCase() === 'btc');
-              if (btcCurrency) {
-                setToCurrency(btcCurrency);
+              // Try to find ETH as default TO currency, otherwise use the first one
+              const ethCurrency = availableToCurrenciesList.find(c => c.symbol.toLowerCase() === 'eth');
+              if (ethCurrency) {
+                setToCurrency(ethCurrency);
               } else {
                 setToCurrency(availableToCurrenciesList[0]);
               }
@@ -227,7 +227,7 @@ function SwapPageContent() {
             {!isConnected ? (
               <button 
                 onClick={() => setVisible(true)}
-                className="w-full bg-slate-800 text-white font-bold py-3 px-4 rounded-lg border border-slate-700 hover:bg-slate-700 transition duration-150 ease-in-out flex items-center justify-center space-x-2"
+                className="w-full bg-slate-800 text-white font-bold py-3 px-4 rounded-lg border border-slate-700 hover:bg-slate-700 transition duration-150 ease-in-out flex items-center justify-center space-x-2 cursor-pointer"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
@@ -246,7 +246,7 @@ function SwapPageContent() {
                   </div>
                   <button 
                     onClick={disconnectWallet}
-                    className="text-sm px-3 py-1 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition duration-150 ease-in-out"
+                    className="text-sm px-3 py-1 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition duration-150 ease-in-out cursor-pointer"
                   >
                     Disconnect
                   </button>
@@ -273,7 +273,7 @@ function SwapPageContent() {
               <p className="text-red-400">{error}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="mt-4 px-4 py-2 bg-slate-800 text-slate-200 rounded-lg hover:bg-slate-700 transition duration-150 ease-in-out"
+                className="mt-4 px-4 py-2 bg-slate-800 text-slate-200 rounded-lg hover:bg-slate-700 transition duration-150 ease-in-out cursor-pointer"
               >
                 Retry
               </button>
@@ -367,7 +367,7 @@ function SwapWidget({
   // Initialize recipient address with the user's address when connected
   useEffect(() => {
     if (isConnected && userAccount) {
-      setRecipientAddress(userAccount);
+      // Removed setting default recipient address
     }
   }, [isConnected, userAccount]);
   
@@ -833,17 +833,7 @@ function SwapWidget({
 
   return (
     <>
-      {/* Debug panel - only visible during development */}
-      <div className="mb-4 p-2 text-xs bg-black/70 border border-red-500 font-mono overflow-auto max-h-40 text-white">
-        <div>DEBUG INFO:</div>
-        <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-        <button 
-          onClick={() => setIsLoading(false)}
-          className="mt-2 px-2 py-1 bg-red-600 rounded text-white"
-        >
-          Force isLoading=false
-        </button>
-      </div>
+      {/* Debug panel removed */}
     
       {transactionData && (
         <div className="space-y-4">
@@ -883,20 +873,11 @@ function SwapWidget({
                 </div>
               </div>
               
-              {/* Transaction status - simplified */}
-              {transactionStatus && transactionStatus !== 'created' && (
-                <div className="mt-3 p-2 rounded-lg text-center bg-slate-800 border border-slate-700">
-                  <p className="font-medium text-slate-300">
-                    Status: {transactionStatus}
-                  </p>
-                </div>
-              )}
-              
               {/* Always show Phantom send button when transaction data exists */}
               <div className="mt-6 bg-gradient-to-r from-purple-600 to-indigo-600 p-[3px] rounded-lg shadow-lg">
                 <button
                   onClick={sendTransactionFromPhantom}
-                  className="w-full bg-slate-800 text-white py-5 px-6 rounded-md hover:bg-slate-700 transition duration-150 ease-in-out flex items-center justify-center"
+                  className="w-full bg-slate-800 text-white py-3 px-6 rounded-md hover:bg-slate-700 transition duration-150 ease-in-out flex items-center justify-center cursor-pointer"
                   disabled={transactionStatus === 'processing' || transactionStatus === 'success'}
                 >
                   {isLoading ? (
@@ -908,56 +889,23 @@ function SwapWidget({
                       Processing...
                     </span>
                   ) : (
-                    <span className="flex items-center justify-center text-xl font-bold">
-                      <svg viewBox="0 0 128 128" width="32" height="32" className="mr-3 text-purple-400" fill="currentColor">
-                        <path d="M64 0C28.7 0 0 28.7 0 64s28.7 64 64 64 64-28.7 64-64S99.3 0 64 0zm22.9 84.5c-8.2 5.6-18 8.5-28.9 8.5-10.9 0-20.7-2.9-28.9-8.5C21 78.8 16 71.2 16 64c0-15.9 12.9-28.9 28.9-28.9 9.3 0 17.8 4.5 23.1 11.5 5.3-7 13.8-11.5 23.1-11.5C107 35.1 120 48 120 64c0 7.2-5 14.8-13.1 20.5z"/>
-                        <path d="M88 48c-5.5 0-10.4 2.6-13.6 6.7C77.9 58.8 80 64.1 80 70c0 2.1-.3 4.2-.8 6.1 2.7.9 5.5 1.3 8.8 1.3 11.6 0 20.9-9.4 20.9-20.9S99.5 48 88 48zM40 48c-11.6 0-20.9 9.4-20.9 20.9S28.5 79.7 40 79.7c3.3 0 6.1-.5 8.8-1.3-.5-2-.8-4-.8-6.1 0-5.9 2.1-11.2 5.6-15.4C50.4 50.6 45.5 48 40 48z"/>
-                      </svg>
+                    <span className="font-medium">
                       Send with Phantom
                     </span>
                   )}
                 </button>
               </div>
-              
-              {/* Transaction signature if available */}
-              {transactionSignature && (
-                <div className="mt-4 mb-2">
-                  <span className="text-slate-400 block mb-1">Transaction Signature:</span>
-                  <div className="bg-slate-800 p-3 rounded border border-green-700 break-all font-mono text-xs text-slate-300">
-                    {transactionSignature}
-                  </div>
-                  <div className="mt-2 text-xs text-right">
-                    <a 
-                      href={`https://explorer.solana.com/tx/${transactionSignature}?cluster=mainnet-beta`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-purple-400 hover:text-purple-300"
-                    >
-                      View on Solana Explorer
-                    </a>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
           
-          {/* Error display and new exchange button */}
-          <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
-            {(error || quoteError) && (
+          {/* Error display only - "New Exchange" button removed */}
+          {(error || quoteError) && (
+            <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
               <div className="bg-red-900/20 border border-red-700 rounded-lg p-3 mb-3 text-red-400 text-sm">
                 {error || quoteError}
               </div>
-            )}
-            
-            <div className="flex flex-col space-y-3">
-              <button 
-                onClick={() => setTransactionStatus(null)}
-                className="w-full bg-slate-700 text-slate-300 py-3 px-4 rounded-lg hover:bg-slate-600 transition duration-150 ease-in-out"
-              >
-                New Exchange
-              </button>
             </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -973,7 +921,7 @@ function SwapWidget({
             </div>
             <div className="flex p-1 bg-slate-900 rounded-lg">
               <button
-                className={`flex-1 py-2 px-4 rounded-md text-center transition-colors duration-200 text-sm font-medium ${
+                className={`flex-1 py-2 px-4 rounded-md text-center transition-colors duration-200 text-sm font-medium cursor-pointer ${
                   rateType === 'standard'
                     ? 'bg-purple-600 text-white'
                     : 'text-slate-400 hover:bg-slate-800'
@@ -985,7 +933,7 @@ function SwapWidget({
                 Floating
               </button>
               <button
-                className={`flex-1 py-2 px-4 rounded-md text-center transition-colors duration-200 text-sm font-medium ${
+                className={`flex-1 py-2 px-4 rounded-md text-center transition-colors duration-200 text-sm font-medium cursor-pointer ${
                   rateType === 'fixed-rate'
                     ? 'bg-purple-600 text-white'
                     : 'text-slate-400 hover:bg-slate-800'
@@ -1109,16 +1057,6 @@ function SwapWidget({
                 onChange={(e) => setRecipientAddress(e.target.value)}
               />
             </div>
-            {isConnected && (
-              <div className="mt-1 text-xs text-right">
-                <button 
-                  onClick={() => setRecipientAddress(userAccount)}
-                  className="text-purple-400 hover:text-purple-300"
-                >
-                  Use my address
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Rate Display */}
@@ -1150,7 +1088,7 @@ function SwapWidget({
 
           {/* Swap Button */}
           <button 
-            className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition duration-150 ease-in-out flex items-center justify-center"
+            className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition duration-150 ease-in-out flex items-center justify-center cursor-pointer"
             disabled={isLoading || quoteLoading || !fromCurrency || !toCurrency || !fromAmount || parseFloat(fromAmount) === 0}
             onClick={!isConnected ? () => setWalletVisible(true) : initiateSwap}
           >
