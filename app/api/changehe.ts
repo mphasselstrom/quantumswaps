@@ -1,5 +1,5 @@
 // You will need to set the actual API key in your environment variables
-const API_KEY = process.env.CHANGEHERO_API_KEY || 'your-api-key';
+const API_KEY = process.env.CHANGEHERO_API_KEY || '5b83075855a141e7992c2250c4a12fce';
 const API_URL = 'https://api.changehero.io/v2/';
 
 export async function makeChangeHeroRequest(method: string, params: any = {}) {
