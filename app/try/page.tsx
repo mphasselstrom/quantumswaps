@@ -349,13 +349,14 @@ function SwapWidget({
   const [toAmount, setToAmount] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [minAmount, setMinAmount] = useState<string>('0.001')
+  const [minAmount, setMinAmount] = useState<string>('0.04')
   const [transactionInProgress, setTransactionInProgress] = useState(false)
   const [transactionId, setTransactionId] = useState<string | null>(null)
   const [transactionStatus, setTransactionStatus] = useState<string | null>(null)
   const [quoteData, setQuoteData] = useState<SwapQuoteResponse | null>(null)
   const [quoteLoading, setQuoteLoading] = useState(false)
   const [quoteError, setQuoteError] = useState<string | null>(null)
+  const [rateType, setRateType] = useState<'standard' | 'fixed-rate'>('standard')
   const fromInputRef = useRef<HTMLInputElement>(null)
   const toInputRef = useRef<HTMLInputElement>(null)
   
@@ -369,7 +370,7 @@ function SwapWidget({
       }
       
       // Set a fixed min amount for demo purposes
-      const minAmountValue = '0.001';
+      const minAmountValue = '0.04';
       setMinAmount(minAmountValue);
       
       // Set a default value if the input is empty
@@ -413,7 +414,7 @@ function SwapWidget({
         toNetwork: toCurrency.network,
         fromAmount: amount,
         fromWalletAddress: walletAddress,
-        flow: 'standard', // Adding the required flow parameter
+        flow: rateType, // Use the selected rate type
       };
       
       console.log('Sending quote request:', quoteRequest);
@@ -523,6 +524,15 @@ function SwapWidget({
   // Handle input change
   const handleFromAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFromAmount(e.target.value);
+  };
+  
+  // Handle toggle change
+  const handleRateTypeChange = (newType: 'standard' | 'fixed-rate') => {
+    setRateType(newType);
+    // Re-fetch quote with new rate type if we have the necessary data
+    if (fromAmount && parseFloat(fromAmount) > 0) {
+      fetchQuote(fromAmount);
+    }
   };
   
   // Initiate the swap (using the quote data)
@@ -648,6 +658,10 @@ function SwapWidget({
                 <span className="text-slate-400">Receive:</span>
                 <span className="text-slate-300">{toAmount} {toCurrency?.symbol}</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Rate Type:</span>
+                <span className="text-slate-300">{rateType === 'standard' ? 'Floating' : 'Fixed'}</span>
+              </div>
               {quoteData && (
                 <div className="flex justify-between">
                   <span className="text-slate-400">Network Fee:</span>
@@ -716,6 +730,42 @@ function SwapWidget({
 
       {!transactionStatus && (
         <>
+          {/* Rate Type Toggle */}
+          <div className="mb-4">
+            <div className="flex justify-between mb-2">
+              <label className="text-sm text-slate-400 font-medium">Rate Type</label>
+              <div className="text-sm text-slate-500">
+                {quoteLoading && 'Updating...'}
+              </div>
+            </div>
+            <div className="flex p-1 bg-slate-900 rounded-lg">
+              <button
+                className={`flex-1 py-2 px-4 rounded-md text-center transition-colors duration-200 text-sm font-medium ${
+                  rateType === 'standard'
+                    ? 'bg-purple-600 text-white'
+                    : 'text-slate-400 hover:bg-slate-800'
+                }`}
+                onClick={() => handleRateTypeChange('standard')}
+                disabled={quoteLoading}
+                title="Floating rate: The exchange rate may change slightly between quote and execution. Usually offers better rates but with small market risk."
+              >
+                Floating
+              </button>
+              <button
+                className={`flex-1 py-2 px-4 rounded-md text-center transition-colors duration-200 text-sm font-medium ${
+                  rateType === 'fixed-rate'
+                    ? 'bg-purple-600 text-white'
+                    : 'text-slate-400 hover:bg-slate-800'
+                }`}
+                onClick={() => handleRateTypeChange('fixed-rate')}
+                disabled={quoteLoading}
+                title="Fixed rate: The exchange rate is guaranteed not to change between quote and execution. May have slightly higher fees but eliminates market risk."
+              >
+                Fixed
+              </button>
+            </div>
+          </div>
+
           {/* From Section */}
           <div>
             <div className="flex justify-between mb-2">
@@ -816,7 +866,9 @@ function SwapWidget({
           {fromCurrency && toCurrency && fromAmount && toAmount && (
             <div className="bg-slate-900/50 rounded-lg p-3 mb-4">
               <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-400">Rate</span>
+                <span className="text-slate-400">
+                  Rate ({rateType === 'standard' ? 'Floating' : 'Fixed'})
+                </span>
                 <span className="text-slate-300">
                   1 {fromCurrency.symbol} ≈ {(parseFloat(toAmount) / parseFloat(fromAmount)).toFixed(6)} {toCurrency.symbol}
                 </span>
