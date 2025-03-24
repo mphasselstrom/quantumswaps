@@ -3,7 +3,6 @@ export interface Currency {
   id: string
   name: string
   symbol: string
-  icon: string
   network: string
   extraIdName?: string
   contractAddress?: string
@@ -18,7 +17,7 @@ export interface SwapWidgetProps {
   isConnected: boolean
   connectWallet: () => Promise<string | null>
   userAccount: string
-  setWalletVisible: (open: boolean) => void
+  setWalletVisible: (visible: boolean) => void
 }
 
 export interface CurrencySelectorProps {
@@ -27,4 +26,49 @@ export interface CurrencySelectorProps {
   currencies: Currency[]
   onSelect: (currency: Currency) => void
   title: string
+}
+
+// API types
+export interface ApiCurrencyPair {
+  fromCurrency: {
+    currency: string
+    network: string
+  }
+  toCurrency: {
+    currency: string
+    network: string
+  }
+}
+
+export interface ApiPairsResponse {
+  pairs: ApiCurrencyPair[]
+}
+
+// Swap Quote types
+export interface SwapQuoteRequest {
+  fromCurrency: string;
+  fromNetwork?: string;
+  toCurrency: string;
+  toNetwork?: string;
+  fromAmount?: string;
+  toAmount?: string;
+  flow?: string;
+  fromWalletAddress: string;
+  fromWalletAddressExtra?: string;
+}
+
+export interface SwapQuoteResponse {
+  fromAmount: string;
+  toAmount: string;
+  networkFee: string;
+  fromCurrency: string;
+  fromNetwork?: string;
+  toCurrency: string;
+  toNetwork?: string;
+  expiresIn?: string;
+  rateId: string;
+  flow?: string;
+  fromWalletAddress: string;
+  fromWalletAddressExtra?: string;
+  signature: string;
 } 
