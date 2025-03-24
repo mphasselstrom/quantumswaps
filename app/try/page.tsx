@@ -357,8 +357,17 @@ function SwapWidget({
   const [quoteLoading, setQuoteLoading] = useState(false)
   const [quoteError, setQuoteError] = useState<string | null>(null)
   const [rateType, setRateType] = useState<'standard' | 'fixed-rate'>('standard')
+  const [recipientAddress, setRecipientAddress] = useState<string>('')
+  const [quoteSignature, setQuoteSignature] = useState<string | null>(null)
   const fromInputRef = useRef<HTMLInputElement>(null)
   const toInputRef = useRef<HTMLInputElement>(null)
+  
+  // Initialize recipient address with the user's address when connected
+  useEffect(() => {
+    if (isConnected && userAccount) {
+      setRecipientAddress(userAccount);
+    }
+  }, [isConnected, userAccount]);
   
   // Get minimum exchange amount (dummy implementation)
   async function getMinExchangeAmount() {
@@ -448,6 +457,15 @@ function SwapWidget({
       
       const data: SwapQuoteResponse = await response.json();
       console.log('Quote response:', data);
+      
+      // Store the signature from the quote response
+      if (data.signature) {
+        setQuoteSignature(data.signature);
+        console.log('Stored quote signature:', data.signature);
+      } else {
+        console.warn('No signature found in quote response');
+        setQuoteSignature(null);
+      }
       
       // If networkFee is not provided, estimate it as a percentage of the fromAmount
       if (!data.networkFee || data.networkFee === '0' || data.networkFee === '') {
@@ -553,6 +571,12 @@ function SwapWidget({
         return;
       }
       
+      // Validate recipient address
+      if (!recipientAddress || recipientAddress.trim() === '') {
+        setError(`Please enter a recipient ${toCurrency.symbol} wallet address`);
+        return;
+      }
+      
       // We need a wallet address to send funds to
       const walletAddress = await useConnectedWallet();
       if (!walletAddress) {
@@ -566,25 +590,66 @@ function SwapWidget({
         return;
       }
       
+      // Check if we have a signature from the quote
+      if (!quoteSignature) {
+        setError('No signature available. Please try fetching a new quote.');
+        return;
+      }
+      
       setError(null);
       setIsLoading(true);
-      setTransactionInProgress(true);
       
-      // This would normally create a transaction with the exchange service
-      // For demo purposes, we'll simulate a transaction
-      
-      // For Solana transactions from connected wallet
-      if (fromCurrency.symbol === 'SOL' && isConnected) {
-        await sendTransactionFromWallet();
-      } else {
-        // For other currencies or not connected to wallet
-        // simulate a successful transaction
-        setTimeout(() => {
-          const mockTransactionId = 'demo-' + Math.random().toString(36).substring(2, 15);
-          setTransactionId(mockTransactionId);
-          setTransactionStatus('created');
+      // Execute the swap transaction
+      try {
+        const executeRequest = {
+          signature: quoteSignature, // Use the signature from the quote
+          toWalletAddress: recipientAddress, // Use the recipient address from the input field
+          refundWalletAddress: walletAddress, // User's connected wallet address for refunds
+        };
+        
+        console.log('Sending execute request:', executeRequest);
+        
+        // Use our API route that proxies to the external API
+        const response = await fetch('/api/swap/execute', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(executeRequest),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Execute error:', errorData);
           
-          // After a delay, update status to simulate progress
+          // Format error message for display
+          let errorMessage = 'Failed to execute swap';
+          
+          if (errorData.message && Array.isArray(errorData.message)) {
+            errorMessage = errorData.message.join('; ');
+          } else if (errorData.error) {
+            errorMessage = errorData.error;
+          } else if (typeof errorData.message === 'string') {
+            errorMessage = errorData.message;
+          }
+          
+          throw new Error(errorMessage);
+        }
+        
+        const executeData = await response.json();
+        console.log('Execute response:', executeData);
+        
+        // Set transaction details from the response
+        setTransactionId(executeData.id);
+        setTransactionStatus('created');
+        setTransactionInProgress(true);
+        
+        // If this is a SOL transaction and user is connected to a wallet
+        if (fromCurrency.symbol === 'SOL' && isConnected) {
+          // Wait for user to trigger the wallet transaction in the UI
+          // We'll show the confirm screen with transaction details
+        } else {
+          // For demo purposes, simulate a successful transaction flow
           setTimeout(() => {
             setTransactionStatus('confirming');
             
@@ -594,7 +659,13 @@ function SwapWidget({
               setIsLoading(false);
             }, 3000);
           }, 2000);
-        }, 1500);
+        }
+        
+      } catch (executeErr) {
+        console.error('Error executing swap:', executeErr);
+        setError(executeErr instanceof Error ? executeErr.message : 'Failed to execute swap. Please try again.');
+        setIsLoading(false);
+        return;
       }
       
     } catch (err) {
@@ -612,17 +683,15 @@ function SwapWidget({
         throw new Error('Phantom wallet not detected');
       }
       
-      setTransactionStatus('creating');
-      
-      // Create a transaction ID for reference
-      const mockTransactionId = 'phantom-' + Math.random().toString(36).substring(2, 15);
-      setTransactionId(mockTransactionId);
-      
-      // This is a placeholder for a real Solana transaction
-      // In a real app, you would construct a proper transaction
-      // For demo purposes, we'll just simulate the process
+      if (!transactionId) {
+        throw new Error('No transaction ID available');
+      }
       
       setTransactionStatus('waiting_for_confirmation');
+      
+      // In a real application, we would construct a proper transaction using the Solana web3.js SDK
+      // based on the transaction details we got from the execute API
+      // For this demo, we'll simulate the process
       
       // Wait a bit to simulate user confirming in wallet
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -662,6 +731,10 @@ function SwapWidget({
                 <span className="text-slate-400">Rate Type:</span>
                 <span className="text-slate-300">{rateType === 'standard' ? 'Floating' : 'Fixed'}</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Recipient:</span>
+                <span className="text-slate-300 text-xs truncate max-w-[200px]">{recipientAddress}</span>
+              </div>
               {quoteData && (
                 <div className="flex justify-between">
                   <span className="text-slate-400">Network Fee:</span>
@@ -669,7 +742,7 @@ function SwapWidget({
                 </div>
               )}
               <div className="mt-4">
-                <span className="text-slate-400 block mb-1">Address:</span>
+                <span className="text-slate-400 block mb-1">Transaction ID:</span>
                 <div className="bg-slate-800 p-3 rounded border border-slate-700 break-all font-mono text-sm text-slate-300">
                   {transactionId}
                 </div>
@@ -677,17 +750,36 @@ function SwapWidget({
             </div>
           </div>
           
-          {/* Transaction hash display */}
-          {transactionId && (
-            <div className="bg-slate-900 rounded-lg p-4 border border-green-700">
-              <div className="flex items-center space-x-2 mb-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span className="text-green-400 font-medium">Transaction Sent</span>
-              </div>
+          {/* Transaction status display */}
+          <div className="bg-slate-900 rounded-lg p-4 border border-green-700">
+            <div className="flex items-center space-x-2 mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span className="text-green-400 font-medium">Transaction Created</span>
             </div>
-          )}
+            
+            {/* Send from wallet button (only for SOL and connected wallet) */}
+            {fromCurrency?.symbol === 'SOL' && isConnected && (
+              <button
+                onClick={sendTransactionFromWallet}
+                className="w-full mt-3 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition duration-150 ease-in-out flex items-center justify-center"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  <span>Send from Phantom Wallet</span>
+                )}
+              </button>
+            )}
+          </div>
           
           {/* Error message */}
           {(error || quoteError) && (
@@ -698,31 +790,11 @@ function SwapWidget({
           
           {/* Transaction buttons */}
           <div className="flex flex-col space-y-3 mt-6">
-            {!transactionId && (
-              <button 
-                onClick={initiateSwap}
-                className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition duration-150 ease-in-out flex items-center justify-center"
-                disabled={isLoading || quoteLoading}
-              >
-                {isLoading || quoteLoading ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    {isLoading ? 'Processing...' : 'Getting Quote...'}
-                  </span>
-                ) : (
-                  <span>Create Transaction</span>
-                )}
-              </button>
-            )}
-            
             <button 
               onClick={() => setTransactionStatus(null)}
               className="w-full bg-slate-700 text-slate-300 py-3 px-4 rounded-lg hover:bg-slate-600 transition duration-150 ease-in-out"
             >
-              {transactionId ? 'New Exchange' : 'Cancel'}
+              New Exchange
             </button>
           </div>
         </div>
@@ -860,6 +932,32 @@ function SwapWidget({
                 />
               </div>
             </div>
+          </div>
+
+          {/* Recipient Address Field */}
+          <div className="mb-5">
+            <div className="flex justify-between mb-2">
+              <label className="text-sm text-slate-400 font-medium">Recipient Address ({toCurrency?.symbol})</label>
+            </div>
+            <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
+              <input
+                type="text"
+                className="w-full bg-transparent text-sm text-slate-200 focus:outline-none border-none font-mono"
+                placeholder={`Enter ${toCurrency?.symbol || 'destination'} wallet address`}
+                value={recipientAddress}
+                onChange={(e) => setRecipientAddress(e.target.value)}
+              />
+            </div>
+            {isConnected && (
+              <div className="mt-1 text-xs text-right">
+                <button 
+                  onClick={() => setRecipientAddress(userAccount)}
+                  className="text-purple-400 hover:text-purple-300"
+                >
+                  Use my address
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Rate Display */}
