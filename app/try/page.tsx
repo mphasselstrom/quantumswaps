@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { ChangeHeroCurrency, ChangeHeroResponse } from '../types/changeHero'
 import * as changeHeroService from '../services/changeHeroService'
@@ -714,14 +714,14 @@ function SwapWidget({
         // Normal swap interface
         <>
           {/* From Section */}
-          <div className="mb-2">
+          <div>
             <div className="flex justify-between mb-2">
               <label className="text-sm text-slate-400 font-medium">From</label>
               {minAmount && fromCurrency && (
                 <span className="text-sm text-slate-500">Min: {minAmount} {fromCurrency.symbol}</span>
               )}
             </div>
-            <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
+            <div className="bg-slate-900 rounded-lg p-4 border border-slate-700 relative">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <button 
@@ -762,21 +762,25 @@ function SwapWidget({
             </div>
           </div>
 
-          {/* Swap Direction Button */}
-          <div className="flex justify-center -my-2 relative z-10">
-            <button 
-              className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full p-2 shadow-md transition duration-150 ease-in-out cursor-pointer"
-              onClick={swapCurrencies}
-              disabled={!fromCurrency || !toCurrency}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-500">
-                <path d="M12 19V5M5 12l7-7 7 7"/>
-              </svg>
-            </button>
+          {/* Swap button container - positioned absolutely to center between boxes */}
+          <div className="relative h-8 z-30">
+            <div className="absolute left-1/2 transform -translate-x-1/2 -mt-6">
+              <button 
+                className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full p-2 shadow-lg hover:shadow-xl transition duration-150 ease-in-out cursor-pointer transform hover:scale-105 focus:outline-none"
+                onClick={swapCurrencies}
+                disabled={!fromCurrency || !toCurrency}
+                aria-label="Swap direction"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-500">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <polyline points="19 12 12 19 5 12"></polyline>
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* To Section */}
-          <div className="mb-5 mt-2">
+          <div className="mb-5">
             <div className="flex justify-between mb-2">
               <label className="text-sm text-slate-400 font-medium">To</label>
               <span className="text-sm text-slate-500">
@@ -911,6 +915,40 @@ function SwapWidget({
 // CurrencySelector Modal Component
 function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: CurrencySelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  
+  // Focus search input when modal opens
+  useEffect(() => {
+    if (isOpen && searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+    }
+    
+    // Add event listener for Escape key
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    
+    window.addEventListener('keydown', handleEscapeKey);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('keydown', handleEscapeKey);
+      setSearchQuery('');
+    };
+  }, [isOpen, onClose]);
+  
+  // Handle click outside modal
+  const modalContentRef = useRef<HTMLDivElement>(null);
+  
+  const handleModalClick = (e: React.MouseEvent) => {
+    if (modalContentRef.current && !modalContentRef.current.contains(e.target as Node)) {
+      onClose();
+    }
+  };
   
   if (!isOpen) return null;
   
@@ -920,8 +958,14 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
   );
   
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-start justify-center p-4 pt-32 overflow-y-auto">
-      <div className="bg-slate-800 rounded-xl max-w-md w-full max-h-[80vh] shadow-xl overflow-hidden">
+    <div 
+      className="fixed inset-0 bg-black/80 z-50 flex items-start justify-center p-4 pt-32 overflow-y-auto"
+      onClick={handleModalClick}
+    >
+      <div 
+        ref={modalContentRef}
+        className="bg-slate-800 rounded-xl max-w-md w-full max-h-[80vh] shadow-xl overflow-hidden"
+      >
         <div className="p-4 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
           <h3 className="text-lg font-semibold text-slate-200">{title}</h3>
           <button 
@@ -936,6 +980,7 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
         </div>
         <div className="p-4">
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="Search by name or symbol"
             className="form-input w-full bg-slate-900 mb-4 sticky top-[65px] z-10"
