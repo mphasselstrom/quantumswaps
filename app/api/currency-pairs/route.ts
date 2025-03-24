@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Make the API call to the external service
-    const response = await fetch('https://70e9-2a09-bac1-60a0-260-00-3cc-6b.ngrok-free.app/v1/currencies/pairs', {
+    const response = await fetch('https://ed28-2a09-bac1-60a0-260-00-3cc-6b.ngrok-free.app/v1/currencies/pairs', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
