@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { Currency, SwapWidgetProps, CurrencySelectorProps, ApiCurrencyPair, ApiPairsResponse, SwapQuoteRequest, SwapQuoteResponse } from './interfaces'
 import { ConnectionProvider, WalletProvider, useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
-import { clusterApiUrl, Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js'
+import { clusterApiUrl, Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL, Connection } from '@solana/web3.js'
 import { WalletModalProvider, useWalletModal } from '@solana/wallet-adapter-react-ui'
 
 // Dynamically import components to avoid SSR issues
@@ -359,6 +359,8 @@ function SwapWidget({
   const [rateType, setRateType] = useState<'standard' | 'fixed-rate'>('standard')
   const [recipientAddress, setRecipientAddress] = useState<string>('')
   const [quoteSignature, setQuoteSignature] = useState<string | null>(null)
+  const [transactionData, setTransactionData] = useState<any>(null)
+  const [transactionSignature, setTransactionSignature] = useState<string | null>(null)
   const fromInputRef = useRef<HTMLInputElement>(null)
   const toInputRef = useRef<HTMLInputElement>(null)
   
@@ -553,9 +555,11 @@ function SwapWidget({
     }
   };
   
-  // Initiate the swap (using the quote data)
+  // Add logging to initiateSwap function to see when isLoading is set to true
   const initiateSwap = async () => {
+    console.log('initiateSwap - start', { isLoading });
     try {
+      // All the validation checks remain the same
       if (!fromCurrency || !toCurrency) {
         setError('Please select currencies');
         return;
@@ -592,11 +596,12 @@ function SwapWidget({
       
       // Check if we have a signature from the quote
       if (!quoteSignature) {
-        setError('No signature available. Please try fetching a new quote.');
+        setError('No signature available. Please fetch a new quote.');
         return;
       }
       
       setError(null);
+      console.log('Setting isLoading=true in initiateSwap');
       setIsLoading(true);
       
       // Execute the swap transaction
@@ -637,33 +642,24 @@ function SwapWidget({
         }
         
         const executeData = await response.json();
-        console.log('Execute response:', executeData);
+        console.log('Execute API response:', executeData);
+        
+        // Store all the execute data
+        setTransactionData(executeData);
         
         // Set transaction details from the response
         setTransactionId(executeData.id);
         setTransactionStatus('created');
         setTransactionInProgress(true);
         
-        // If this is a SOL transaction and user is connected to a wallet
-        if (fromCurrency.symbol === 'SOL' && isConnected) {
-          // Wait for user to trigger the wallet transaction in the UI
-          // We'll show the confirm screen with transaction details
-        } else {
-          // For demo purposes, simulate a successful transaction flow
-          setTimeout(() => {
-            setTransactionStatus('confirming');
-            
-            // After another delay, update to complete
-            setTimeout(() => {
-              setTransactionStatus('success');
-              setIsLoading(false);
-            }, 3000);
-          }, 2000);
-        }
+        // Critical fix: Set isLoading to false AFTER transaction data is set
+        console.log('Setting isLoading=false in initiateSwap after success');
+        setIsLoading(false);
         
       } catch (executeErr) {
         console.error('Error executing swap:', executeErr);
         setError(executeErr instanceof Error ? executeErr.message : 'Failed to execute swap. Please try again.');
+        console.log('Setting isLoading=false in initiateSwap after error');
         setIsLoading(false);
         return;
       }
@@ -672,53 +668,162 @@ function SwapWidget({
       console.error('Error initiating swap:', err);
       setError('Failed to create transaction. Please try again.');
       setTransactionInProgress(false);
+      console.log('Setting isLoading=false in initiateSwap after outer error');
       setIsLoading(false);
     }
   };
   
   // Send a Solana transaction from the connected wallet
-  const sendTransactionFromWallet = async () => {
+  const sendTransactionFromPhantom = async () => {
+    console.log('sendTransactionFromPhantom called');
+    console.log('Current state:', {
+      isLoading,
+      transactionStatus,
+      transactionData: !!transactionData,
+      transactionId: transactionData?.id,
+      depositAddress: transactionData?.depositAddress
+    });
+    
     try {
       if (!window.solana || !window.solana.isPhantom) {
+        console.log('Phantom not detected');
         throw new Error('Phantom wallet not detected');
       }
       
-      if (!transactionId) {
-        throw new Error('No transaction ID available');
+      if (!transactionData) {
+        console.log('No transaction data available');
+        throw new Error('No transaction data available');
       }
       
+      console.log('Setting status to waiting_for_confirmation and isLoading=true');
       setTransactionStatus('waiting_for_confirmation');
+      setIsLoading(true);
+      setError(null);
       
-      // In a real application, we would construct a proper transaction using the Solana web3.js SDK
-      // based on the transaction details we got from the execute API
-      // For this demo, we'll simulate the process
+      // Construct a Solana transaction using the depositAddress and amount from the transaction data
+      const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
       
-      // Wait a bit to simulate user confirming in wallet
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Parse the deposit address as a PublicKey
+      const depositPubkey = new PublicKey(transactionData.depositAddress);
+      const fromPubkey = new PublicKey(userAccount);
       
-      setTransactionStatus('processing');
+      // Create a simple SOL transfer transaction
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey,
+          toPubkey: depositPubkey,
+          lamports: LAMPORTS_PER_SOL * parseFloat(transactionData.fromAmount), // Convert SOL to lamports
+        })
+      );
       
-      // Simulate processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Set a recent blockhash
+      const { blockhash } = await connection.getRecentBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = fromPubkey;
       
-      // Complete the transaction
-      setTransactionStatus('success');
-      setIsLoading(false);
+      console.log('Sending SOL transaction:', {
+        from: fromPubkey.toString(),
+        to: depositPubkey.toString(),
+        amount: transactionData.fromAmount,
+        lamports: LAMPORTS_PER_SOL * parseFloat(transactionData.fromAmount)
+      });
+      
+      try {
+        // Sign and send the transaction using Phantom
+        const signedTransaction = await window.solana.signTransaction(transaction);
+        
+        console.log('Transaction signed successfully');
+        
+        // Set status to processing
+        setTransactionStatus('processing');
+        
+        // Send the signed transaction to the Solana network
+        const signature = await connection.sendRawTransaction(signedTransaction.serialize());
+        
+        console.log('Transaction sent with signature:', signature);
+        
+        // Update UI with transaction signature
+        setTransactionSignature(signature);
+        
+        // Poll for confirmation
+        const confirmInterval = setInterval(async () => {
+          try {
+            const confirmation = await connection.confirmTransaction(signature);
+            if (confirmation) {
+              clearInterval(confirmInterval);
+              console.log('Transaction confirmed:', confirmation);
+              setTransactionStatus('success');
+              console.log('Setting isLoading=false in confirmation callback');
+              setIsLoading(false);
+            }
+          } catch (err) {
+            console.error('Error checking confirmation:', err);
+          }
+        }, 2000);
+        
+        // Set a timeout in case confirmation takes too long
+        setTimeout(() => {
+          clearInterval(confirmInterval);
+          console.log('Confirmation timeout - transaction may still be processing');
+          setTransactionStatus('pending');
+          console.log('Setting isLoading=false in confirmation timeout');
+          setIsLoading(false);
+        }, 60000); // 60 second timeout
+        
+      } catch (signError) {
+        console.error('Error signing transaction:', signError);
+        setError('User rejected transaction or signing failed');
+        setTransactionStatus('failed');
+        console.log('Setting isLoading=false in sign error');
+        setIsLoading(false);
+      }
       
     } catch (err) {
       console.error('Error sending transaction:', err);
-      setError('Failed to send transaction. Please try again.');
+      setError('Failed to send transaction: ' + (err instanceof Error ? err.message : 'Unknown error'));
       setTransactionStatus('failed');
+      console.log('Setting isLoading=false in send error');
       setIsLoading(false);
     }
   };
+  
+  // Force isLoading to false when component renders - TEMPORARY FIX
+  useEffect(() => {
+    if (isLoading) {
+      console.log('FORCING isLoading to false via useEffect');
+      setTimeout(() => setIsLoading(false), 1000);
+    }
+  }, [isLoading]);
+
+  // Also add this debugging display to the UI to see current state
+  const debugInfo = {
+    isLoading,
+    transactionStatus,
+    hasTransactionData: !!transactionData,
+    buttonDisabled: isLoading || transactionStatus === 'processing' || transactionStatus === 'success',
+  };
+  
+  console.log('Render state:', debugInfo);
 
   return (
     <>
-      {transactionStatus === 'created' && (
+      {/* Debug panel - only visible during development */}
+      <div className="mb-4 p-2 text-xs bg-black/70 border border-red-500 font-mono overflow-auto max-h-40 text-white">
+        <div>DEBUG INFO:</div>
+        <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+        <button 
+          onClick={() => setIsLoading(false)}
+          className="mt-2 px-2 py-1 bg-red-600 rounded text-white"
+        >
+          Force isLoading=false
+        </button>
+      </div>
+    
+      {transactionData && (
         <div className="space-y-4">
           <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
             <div className="flex flex-col space-y-2">
+              {/* Basic transaction info */}
               <div className="flex justify-between">
                 <span className="text-slate-400">Send:</span>
                 <span className="text-slate-300">{fromAmount} {fromCurrency?.symbol}</span>
@@ -727,80 +832,110 @@ function SwapWidget({
                 <span className="text-slate-400">Receive:</span>
                 <span className="text-slate-300">{toAmount} {toCurrency?.symbol}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Rate Type:</span>
-                <span className="text-slate-300">{rateType === 'standard' ? 'Floating' : 'Fixed'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Recipient:</span>
-                <span className="text-slate-300 text-xs truncate max-w-[200px]">{recipientAddress}</span>
-              </div>
-              {quoteData && (
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Network Fee:</span>
-                  <span className="text-slate-300">{quoteData.networkFee} {fromCurrency?.symbol}</span>
-                </div>
-              )}
-              <div className="mt-4">
+              
+              {/* Transaction and deposit information */}
+              <div className="mt-4 mb-2">
                 <span className="text-slate-400 block mb-1">Transaction ID:</span>
                 <div className="bg-slate-800 p-3 rounded border border-slate-700 break-all font-mono text-sm text-slate-300">
-                  {transactionId}
+                  {transactionData.id}
                 </div>
               </div>
+              
+              <div className="bg-indigo-900/30 rounded-lg p-3 border border-indigo-700 mt-2">
+                <h3 className="text-indigo-300 font-medium mb-2">Send Payment Instructions</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Send Exactly:</span>
+                    <span className="text-slate-300 font-medium">{transactionData.fromAmount} {transactionData.fromCurrency.toUpperCase()}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block mb-1">Deposit Address:</span>
+                    <div className="bg-slate-800 p-2 rounded break-all font-mono text-xs text-slate-300">
+                      {transactionData.depositAddress}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Transaction status - simplified */}
+              {transactionStatus && transactionStatus !== 'created' && (
+                <div className="mt-3 p-2 rounded-lg text-center bg-slate-800 border border-slate-700">
+                  <p className="font-medium text-slate-300">
+                    Status: {transactionStatus}
+                  </p>
+                </div>
+              )}
+              
+              {/* Always show Phantom send button when transaction data exists */}
+              <div className="mt-6 bg-gradient-to-r from-purple-600 to-indigo-600 p-[3px] rounded-lg shadow-lg">
+                <button
+                  onClick={sendTransactionFromPhantom}
+                  className="w-full bg-slate-800 text-white py-5 px-6 rounded-md hover:bg-slate-700 transition duration-150 ease-in-out flex items-center justify-center"
+                  disabled={transactionStatus === 'processing' || transactionStatus === 'success'}
+                >
+                  {isLoading ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center text-xl font-bold">
+                      <svg viewBox="0 0 128 128" width="32" height="32" className="mr-3 text-purple-400" fill="currentColor">
+                        <path d="M64 0C28.7 0 0 28.7 0 64s28.7 64 64 64 64-28.7 64-64S99.3 0 64 0zm22.9 84.5c-8.2 5.6-18 8.5-28.9 8.5-10.9 0-20.7-2.9-28.9-8.5C21 78.8 16 71.2 16 64c0-15.9 12.9-28.9 28.9-28.9 9.3 0 17.8 4.5 23.1 11.5 5.3-7 13.8-11.5 23.1-11.5C107 35.1 120 48 120 64c0 7.2-5 14.8-13.1 20.5z"/>
+                        <path d="M88 48c-5.5 0-10.4 2.6-13.6 6.7C77.9 58.8 80 64.1 80 70c0 2.1-.3 4.2-.8 6.1 2.7.9 5.5 1.3 8.8 1.3 11.6 0 20.9-9.4 20.9-20.9S99.5 48 88 48zM40 48c-11.6 0-20.9 9.4-20.9 20.9S28.5 79.7 40 79.7c3.3 0 6.1-.5 8.8-1.3-.5-2-.8-4-.8-6.1 0-5.9 2.1-11.2 5.6-15.4C50.4 50.6 45.5 48 40 48z"/>
+                      </svg>
+                      Send with Phantom
+                    </span>
+                  )}
+                </button>
+              </div>
+              
+              {/* Transaction signature if available */}
+              {transactionSignature && (
+                <div className="mt-4 mb-2">
+                  <span className="text-slate-400 block mb-1">Transaction Signature:</span>
+                  <div className="bg-slate-800 p-3 rounded border border-green-700 break-all font-mono text-xs text-slate-300">
+                    {transactionSignature}
+                  </div>
+                  <div className="mt-2 text-xs text-right">
+                    <a 
+                      href={`https://explorer.solana.com/tx/${transactionSignature}?cluster=mainnet-beta`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-purple-400 hover:text-purple-300"
+                    >
+                      View on Solana Explorer
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           
-          {/* Transaction status display */}
-          <div className="bg-slate-900 rounded-lg p-4 border border-green-700">
-            <div className="flex items-center space-x-2 mb-3">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span className="text-green-400 font-medium">Transaction Created</span>
-            </div>
-            
-            {/* Send from wallet button (only for SOL and connected wallet) */}
-            {fromCurrency?.symbol === 'SOL' && isConnected && (
-              <button
-                onClick={sendTransactionFromWallet}
-                className="w-full mt-3 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition duration-150 ease-in-out flex items-center justify-center"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Processing...
-                  </span>
-                ) : (
-                  <span>Send from Phantom Wallet</span>
-                )}
-              </button>
+          {/* Error display and new exchange button */}
+          <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
+            {(error || quoteError) && (
+              <div className="bg-red-900/20 border border-red-700 rounded-lg p-3 mb-3 text-red-400 text-sm">
+                {error || quoteError}
+              </div>
             )}
-          </div>
-          
-          {/* Error message */}
-          {(error || quoteError) && (
-            <div className="bg-red-900/20 border border-red-700 rounded-lg p-3 mb-3 text-red-400 text-sm">
-              {error || quoteError}
+            
+            <div className="flex flex-col space-y-3">
+              <button 
+                onClick={() => setTransactionStatus(null)}
+                className="w-full bg-slate-700 text-slate-300 py-3 px-4 rounded-lg hover:bg-slate-600 transition duration-150 ease-in-out"
+              >
+                New Exchange
+              </button>
             </div>
-          )}
-          
-          {/* Transaction buttons */}
-          <div className="flex flex-col space-y-3 mt-6">
-            <button 
-              onClick={() => setTransactionStatus(null)}
-              className="w-full bg-slate-700 text-slate-300 py-3 px-4 rounded-lg hover:bg-slate-600 transition duration-150 ease-in-out"
-            >
-              New Exchange
-            </button>
           </div>
         </div>
       )}
 
-      {!transactionStatus && (
+      {!transactionData && !transactionStatus && (
         <>
           {/* Rate Type Toggle */}
           <div className="mb-4">
