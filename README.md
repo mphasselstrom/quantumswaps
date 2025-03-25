@@ -5,7 +5,6 @@ A high-performance API for low-cost, instant cross-chain swaps.
 ## Features
 
 - **Deep Solana Liquidity**: Direct integration with Raydium and Meteora
-- **Privacy-First Cross-Chain Swaps**: No KYC or registration required
 - **Low-Cost Optimization**: Benefit from intelligent swap routing and Solana's low transaction costs
 - **Comprehensive Coverage**: Support for multiple blockchain networks
 - **Developer-Friendly**: Easy to integrate with simple API
