@@ -236,7 +236,7 @@ console.log('Swap transaction:', transaction);`}
           
           <h3 id="currencies-info" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Currencies Info</h3>
           <p className="text-slate-300">
-            Get detailed information about supported currencies.
+            Get detailed information about all available tokens and their supported networks. This endpoint returns a comprehensive list of all cryptocurrencies that can be used with the API.
           </p>
           
           <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
@@ -260,7 +260,7 @@ console.log('Swap transaction:', transaction);`}
           
           <h3 id="currencies-pairs" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Currencies Pairs</h3>
           <p className="text-slate-300">
-            Get available currency pairs for swapping.
+            Get available currency pairs for swapping. You can optionally filter the results by specifying source currencies or networks. If you specify <code className="text-blue-300">fromNetworks</code> or <code className="text-blue-300">fromCurrencies</code>, the response will be limited to only include those pairs.
           </p>
           
           <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
@@ -271,10 +271,10 @@ console.log('Swap transaction:', transaction);`}
               <pre className="text-sm text-slate-300 font-mono">
 {`// Request
 {
-  fromCurrencies?: string[];
-  toCurrencies?: string[];
-  fromNetworks?: string[];
-  toNetworks?: string[];
+  fromCurrencies?: string[];  // Optional: filter by source currencies
+  toCurrencies?: string[];    // Optional: filter by destination currencies
+  fromNetworks?: string[];    // Optional: filter by source networks
+  toNetworks?: string[];      // Optional: filter by destination networks
 }
 
 // Response
@@ -295,7 +295,7 @@ console.log('Swap transaction:', transaction);`}
           
           <h3 id="swap-quote" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Swap Quote</h3>
           <p className="text-slate-300">
-            Get a price quote for swapping between currencies.
+            Get a price quote for swapping between currencies. The quote includes exchange rates, fees, and a signature needed for executing the swap. You can specify either floating or fixed rate by using the <code className="text-blue-300">flow</code> parameter. The result includes a <code className="text-blue-300">signature</code> that will be required when executing the swap.
           </p>
           
           <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
@@ -310,9 +310,9 @@ console.log('Swap transaction:', transaction);`}
   fromNetworks?: string[];
   toCurrencies: string[];
   toNetworks?: string[];
-  fromAmount?: string;
-  toAmount?: string;
-  flow?: string;
+  fromAmount?: string;        // Either this or toAmount is required
+  toAmount?: string;          // Either this or fromAmount is required
+  flow?: string;              // Optional: "floating" or "fixed" rate
   fromWalletAddress: string;
   fromWalletAddressExtra?: string;
 }
@@ -331,7 +331,7 @@ console.log('Swap transaction:', transaction);`}
   flow?: string;
   fromWalletAddress: string;
   fromWalletAddressExtra?: string;
-  signature: string;
+  signature: string;          // Required for swap execution
 }`}
               </pre>
             </div>
@@ -339,7 +339,7 @@ console.log('Swap transaction:', transaction);`}
           
           <h3 id="swap-execute" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Swap Execute</h3>
           <p className="text-slate-300">
-            Execute a swap using a quote signature.
+            Execute a swap using the quote signature obtained from the Quote endpoint. This initiates the transaction to fulfill the swap. You must pass the quote <code className="text-blue-300">signature</code> from the previous step, along with the destination wallet address and a refund address in case the transaction fails.
           </p>
           
           <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
@@ -351,10 +351,10 @@ console.log('Swap transaction:', transaction);`}
               <pre className="text-sm text-slate-300 font-mono">
 {`// Request
 {
-  signature: string;
-  toWalletAddress: string;
+  signature: string;           // The signature from the quote response
+  toWalletAddress: string;     // Destination wallet for receiving funds
   toWalletAddressExtra?: string;
-  refundWalletAddress: string;
+  refundWalletAddress: string; // Address to refund if transaction fails
   refundWalletAddressExtra?: string;
 }
 
