@@ -49,59 +49,29 @@ export default function DocSidebar() {
                   Quickstart
                 </a>
               </li>
-              <li>
-                <a href="#sdks" className={`${isHashActive('#sdks') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
-                  SDKs
-                </a>
-              </li>
-              <li>
-                <a href="#webhooks" className={`${isHashActive('#webhooks') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
-                  Webhooks
-                </a>
-              </li>
             </ul>
           </li>
           <li className="mt-12 lg:mt-8">
             <h5 className="mb-8 lg:mb-3 font-semibold text-slate-200">API Endpoints</h5>
             <ul className="space-y-6 lg:space-y-2">
               <li>
-                <a href="#currency-pairs" className={`${isHashActive('#currency-pairs') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
-                  Currency Pairs
-                </a>
-              </li>
-              <li>
-                <a href="#quote-get" className={`${isHashActive('#quote-get') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
-                  Quote Get
-                </a>
-              </li>
-              <li>
-                <a href="#quote-execute" className={`${isHashActive('#quote-execute') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
-                  Quote Execute
-                </a>
-              </li>
-              <li>
-                <a href="#swap-status" className={`${isHashActive('#swap-status') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
-                  Swap Status
-                </a>
-              </li>
-              <li>
-                <a href="#swaps-history" className={`${isHashActive('#swaps-history') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
-                  Swaps History
-                </a>
-              </li>
-              <li>
                 <a href="#currencies-info" className={`${isHashActive('#currencies-info') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
                   Currencies Info
                 </a>
               </li>
               <li>
-                <a href="#webhook-create" className={`${isHashActive('#webhook-create') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
-                  Create Webhook
+                <a href="#currencies-pairs" className={`${isHashActive('#currencies-pairs') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
+                  Currencies Pairs
                 </a>
               </li>
               <li>
-                <a href="#webhook-get" className={`${isHashActive('#webhook-get') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
-                  Get Webhook
+                <a href="#swap-quote" className={`${isHashActive('#swap-quote') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
+                  Swap Quote
+                </a>
+              </li>
+              <li>
+                <a href="#swap-execute" className={`${isHashActive('#swap-execute') ? 'text-blue-400 font-medium' : 'text-slate-400 hover:text-slate-300'} cursor-pointer`}>
+                  Swap Execute
                 </a>
               </li>
             </ul>

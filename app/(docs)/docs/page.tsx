@@ -1,14 +1,97 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 
 export default function DocsPage() {
+  const [copied, setCopied] = useState(false)
+  
   const tocItems = [
     { id: 'introduction', title: 'Introduction', level: 1 },
     { id: 'quickstart', title: 'Quickstart', level: 1 },
-    { id: 'sdks', title: 'SDKs', level: 1 },
-    { id: 'webhooks', title: 'Webhooks', level: 1 },
+    { id: 'currencies-info', title: 'Currencies Info', level: 1 },
+    { id: 'currencies-pairs', title: 'Currencies Pairs', level: 1 },
+    { id: 'swap-quote', title: 'Swap Quote', level: 1 },
+    { id: 'swap-execute', title: 'Swap Execute', level: 1 },
   ]
+  
+  const copyToClipboard = () => {
+    const quickstartCode = `// I'm integrating a crypto swaps API that allows users to exchange one crypto for another.
+// I'm going to implement a complete flow: checking available currency pairs, getting a quote, and executing a swap.
+// Here are the docs: https://api.quantumswaps.xyz/docs
+
+// Install required dependencies:
+// npm install node-fetch@2
+
+const fetch = require('node-fetch');
+
+// 1. Check available currency pairs
+const pairsResponse = await fetch('https://api.quantumswaps.xyz/v1/currencies/pairs', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_API_KEY'  // Replace with your actual API key
+  },
+  body: JSON.stringify({
+    fromCurrencies: ['BTC'],
+    fromNetworks: ['BTC'],
+    toCurrencies: ['ETH'],
+    toNetworks: ['ETH']
+  })
+});
+
+const pairs = await pairsResponse.json();
+console.log('Available pairs:', pairs);
+
+// 2. Get a quote for the swap
+const quoteResponse = await fetch('https://api.quantumswaps.xyz/v1/swap/quote', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_API_KEY'  // Replace with your actual API key
+  },
+  body: JSON.stringify({
+    fromCurrencies: ['BTC'],
+    fromNetworks: ['BTC'],
+    toCurrencies: ['ETH'],
+    toNetworks: ['ETH'],
+    fromAmount: '0.01',
+    fromWalletAddress: '0x123...'  // Replace with your actual wallet address
+  })
+});
+
+const quote = await quoteResponse.json();
+console.log('Quote details:', quote);
+
+// 3. Execute the swap with the quote signature
+const executeResponse = await fetch('https://api.quantumswaps.xyz/v1/swap/execute', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_API_KEY'  // Replace with your actual API key
+  },
+  body: JSON.stringify({
+    signature: quote.signature,
+    toWalletAddress: '0x456...',  // Replace with the destination wallet address
+    refundWalletAddress: '0x123...'  // Replace with your refund wallet address
+  })
+});
+
+const transaction = await executeResponse.json();
+console.log('Swap transaction:', transaction);
+
+// Note: Replace placeholder values with your actual API key and wallet addresses before using.
+// Make sure to handle errors and implement proper security measures in production.`;
+
+    navigator.clipboard.writeText(quickstartCode)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 3000);
+      })
+      .catch(err => {
+        console.error('Could not copy text: ', err);
+      });
+  };
   
   return (
     <div className="relative mx-auto pt-10 sm:px-2 lg:ml-[19.5rem] xl:mr-[19.5rem] max-w-none bg-slate-900">
@@ -23,66 +106,93 @@ export default function DocsPage() {
           </p>
           
           <p className="text-slate-300 mt-4">
-            The Quantum Swaps API follows RESTful principles and is organized around predictable resource-oriented endpoints. Below you'll find information on how to handle errors and configure webhooks.
+            The Quantum Swaps API follows RESTful principles and is organized around predictable resource-oriented endpoints. Below you'll find information on how to handle errors and integrate with our API.
           </p>
           
           {/* Buttons moved into middle section */}
           <div className="flex space-x-4 my-10">
-            <button className="bg-slate-800/60 px-3 py-1 rounded-lg border border-slate-700 hover:bg-slate-700/80 transition duration-150 ease-in-out cursor-pointer text-sm text-white">
-              Copy Cursor Command
+            <button 
+              onClick={copyToClipboard}
+              className="bg-slate-800/60 px-3 py-1 rounded-lg border border-slate-700 hover:bg-slate-700/80 transition duration-150 ease-in-out cursor-pointer text-sm text-white"
+            >
+              {copied ? 'Copied!' : 'Copy Cursor Command'}
             </button>
-            <button className="bg-slate-800/60 px-3 py-1 rounded-lg border border-slate-700 hover:bg-slate-700/80 transition duration-150 ease-in-out cursor-pointer text-sm text-white">
+            <a 
+              href="https://www.firecrawl.dev/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="bg-slate-800/60 px-3 py-1 rounded-lg border border-slate-700 hover:bg-slate-700/80 transition duration-150 ease-in-out cursor-pointer text-sm text-white inline-flex items-center no-underline"
+            >
               Get AI Ready Docs
-            </button>
+            </a>
           </div>
           
           <h2 id="quickstart" className="text-2xl font-bold tracking-tight text-white scroll-mt-24 mt-16">Quickstart</h2>
           <p className="text-slate-300">
-            Get started quickly with the Quantum Swaps API by following this example:
+            Get started quickly with the Quantum Swaps API by following this end-to-end example for creating a cryptocurrency swap:
           </p>
           
           <div className="mt-8 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
             <div className="px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-mono text-slate-200">Example Request</span>
+              <span className="text-sm font-mono text-slate-200">Complete Swap Flow Example</span>
             </div>
             <div className="p-4">
               <pre className="text-sm text-slate-300 font-mono">
-{`// Get a quote
-const response = await fetch('https://api.quantumswaps.xyz/v1/swap/quote', {
+{`// 1. Check available currency pairs
+const pairsResponse = await fetch('https://api.quantumswaps.xyz/v1/currencies/pairs', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
     'Authorization': 'Bearer YOUR_API_KEY'
   },
   body: JSON.stringify({
-    fromCurrency: 'BTC',
-    fromNetwork: 'BITCOIN',
-    toCurrency: 'ETH',
-    toNetwork: 'ETHEREUM',
+    fromCurrencies: ['BTC'],
+    fromNetworks: ['BTC'],
+    toCurrencies: ['ETH'],
+    toNetworks: ['ETH']
+  })
+});
+
+const pairs = await pairsResponse.json();
+console.log('Available pairs:', pairs);
+
+// 2. Get a quote for the swap
+const quoteResponse = await fetch('https://api.quantumswaps.xyz/v1/swap/quote', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    fromCurrencies: ['BTC'],
+    fromNetworks: ['BTC'],
+    toCurrencies: ['ETH'],
+    toNetworks: ['ETH'],
     fromAmount: '0.01',
     fromWalletAddress: '0x123...'
   })
 });
 
-const quote = await response.json();
-console.log(quote);`}
+const quote = await quoteResponse.json();
+console.log('Quote details:', quote);
+
+// 3. Execute the swap with the quote signature
+const executeResponse = await fetch('https://api.quantumswaps.xyz/v1/swap/execute', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    signature: quote.signature,
+    toWalletAddress: '0x456...',
+    refundWalletAddress: '0x123...'
+  })
+});
+
+const transaction = await executeResponse.json();
+console.log('Swap transaction:', transaction);`}
               </pre>
-            </div>
-          </div>
-          
-          <h2 id="sdks" className="text-2xl font-bold tracking-tight text-white scroll-mt-24 mt-16">SDKs</h2>
-          <p className="text-slate-300">
-            We provide official SDKs for several popular programming languages to make integrating with our API even easier.
-          </p>
-          
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="p-4 bg-slate-800 rounded-lg border border-slate-700">
-              <h3 className="text-lg font-medium text-white mb-2">JavaScript/TypeScript</h3>
-              <pre className="text-sm text-slate-300 font-mono">npm install @quantum-swaps/js</pre>
-            </div>
-            <div className="p-4 bg-slate-800 rounded-lg border border-slate-700">
-              <h3 className="text-lg font-medium text-white mb-2">Python</h3>
-              <pre className="text-sm text-slate-300 font-mono">pip install quantum-swaps</pre>
             </div>
           </div>
           
@@ -115,7 +225,7 @@ console.log(quote);`}
   "error": {
     "code": "invalid_request",
     "message": "The request was invalid",
-    "details": "Missing required parameter: fromCurrency"
+    "details": "Missing required parameter: fromCurrencies"
   }
 }`}
               </pre>
@@ -124,7 +234,31 @@ console.log(quote);`}
           
           <h2 className="text-2xl font-bold tracking-tight text-white scroll-mt-24 mt-16">API Endpoints</h2>
           
-          <h3 id="currency-pairs" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Currency Pairs</h3>
+          <h3 id="currencies-info" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Currencies Info</h3>
+          <p className="text-slate-300">
+            Get detailed information about supported currencies.
+          </p>
+          
+          <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
+            <div className="px-4 py-2 border-b border-slate-700">
+              <span className="text-sm font-mono text-slate-200">POST /v1/currencies/currencies_info</span>
+            </div>
+            <div className="p-4">
+              <pre className="text-sm text-slate-300 font-mono">
+{`// Response
+[
+  {
+    code: string;
+    name: string;
+    networks: string[];
+    isEnabled: boolean;
+  }
+]`}
+              </pre>
+            </div>
+          </div>
+          
+          <h3 id="currencies-pairs" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Currencies Pairs</h3>
           <p className="text-slate-300">
             Get available currency pairs for swapping.
           </p>
@@ -137,18 +271,21 @@ console.log(quote);`}
               <pre className="text-sm text-slate-300 font-mono">
 {`// Request
 {
-  from: string[], 
-  to: string[]
+  fromCurrencies?: string[];
+  toCurrencies?: string[];
+  fromNetworks?: string[];
+  toNetworks?: string[];
 }
 
 // Response
 {
-  "pairs": [
+  pairs: [
     {
-      fromCurrency: String,
-      fromNetwork: String,
-      toCurrency: String,
-      toNetwork: String,
+      fromCurrencies: string[];
+      fromNetworks: string[];
+      toCurrencies: string[];
+      toNetworks: string[];
+      isEnabled: boolean;
     }
   ]
 }`}
@@ -156,7 +293,7 @@ console.log(quote);`}
             </div>
           </div>
           
-          <h3 id="quote-get" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Quote Get</h3>
+          <h3 id="swap-quote" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Swap Quote</h3>
           <p className="text-slate-300">
             Get a price quote for swapping between currencies.
           </p>
@@ -169,27 +306,38 @@ console.log(quote);`}
               <pre className="text-sm text-slate-300 font-mono">
 {`// Request
 {
-  fromCurrency: String,
-  fromNetwork: String,
-  toCurrency: String,
-  toNetwork: String,
-  fromWalletAddress: String,
-  fromAmount: String  // Either this or toAmount required
+  fromCurrencies: string[];
+  fromNetworks?: string[];
+  toCurrencies: string[];
+  toNetworks?: string[];
+  fromAmount?: string;
+  toAmount?: string;
+  flow?: string;
+  fromWalletAddress: string;
+  fromWalletAddressExtra?: string;
 }
 
 // Response
 {
-  exchangeRate: String,
-  fromAmount: String,
-  toAmount: String,
-  networkFee: String,
-  signature: String  // Used for executing the swap
+  fromAmount: string;
+  toAmount: string;
+  networkFee: string;
+  fromCurrencies: string[];
+  fromNetworks?: string[];
+  toCurrencies: string[];
+  toNetworks?: string[];
+  expiresIn?: string;
+  rateId: string;
+  flow?: string;
+  fromWalletAddress: string;
+  fromWalletAddressExtra?: string;
+  signature: string;
 }`}
               </pre>
             </div>
           </div>
           
-          <h3 id="quote-execute" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Quote Execute</h3>
+          <h3 id="swap-execute" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Swap Execute</h3>
           <p className="text-slate-300">
             Execute a swap using a quote signature.
           </p>
@@ -203,194 +351,26 @@ console.log(quote);`}
               <pre className="text-sm text-slate-300 font-mono">
 {`// Request
 {
-  signature: String,
-  toWalletAddress: String,
-  refundWalletAddress: String
+  signature: string;
+  toWalletAddress: string;
+  toWalletAddressExtra?: string;
+  refundWalletAddress: string;
+  refundWalletAddressExtra?: string;
 }
 
 // Response
 {
-  id: String,
-  status: String,
-  fromAmount: String,
-  toAmount: String
-}`}
-              </pre>
-            </div>
-          </div>
-          
-          <h3 id="swap-status" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Swap Status</h3>
-          <p className="text-slate-300">
-            Check the status of a swap by ID.
-          </p>
-          
-          <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-            <div className="px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-mono text-slate-200">POST /v1/swap/status</span>
-            </div>
-            <div className="p-4">
-              <pre className="text-sm text-slate-300 font-mono">
-{`// Request
-{
-  id: String
-}
-
-// Response
-{
-  id: String,
-  status: String,
-  fromAmount: String,
-  toAmount: String
-}`}
-              </pre>
-            </div>
-          </div>
-          
-          <h3 id="swaps-history" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Swaps History</h3>
-          <p className="text-slate-300">
-            Get history of completed swaps.
-          </p>
-          
-          <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-            <div className="px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-mono text-slate-200">POST /v1/swap/history</span>
-            </div>
-            <div className="p-4">
-              <pre className="text-sm text-slate-300 font-mono">
-{`// Request
-{
-  limit: Number,
-  offset: Number
-}
-
-// Response
-{
-  data: [
-    {
-      id: String,
-      status: String,
-      fromAmount: String,
-      toAmount: String,
-      createdAt: String
-    }
-  ],
-  total: Number
-}`}
-              </pre>
-            </div>
-          </div>
-          
-          <h3 id="currencies-info" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Currencies Info</h3>
-          <p className="text-slate-300">
-            Get detailed information about supported currencies.
-          </p>
-          
-          <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-            <div className="px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-mono text-slate-200">POST /v1/currencies/info</span>
-            </div>
-            <div className="p-4">
-              <pre className="text-sm text-slate-300 font-mono">
-{`// Request
-{
-  currencies: String[],
-  networks: String[]
-}
-
-// Response
-{
-  currencies: [
-    {
-      currency: String,
-      network: String,
-      name: String,
-      decimals: Number,
-      logoURI: String
-    }
-  ]
-}`}
-              </pre>
-            </div>
-          </div>
-          
-          <h2 id="webhooks" className="text-2xl font-bold tracking-tight text-white scroll-mt-24 mt-16">Webhooks</h2>
-          <p className="text-slate-300">
-            Webhooks allow you to receive real-time updates about swap status changes. 
-            Configure webhooks to notify your services when important events occur.
-          </p>
-          
-          <div className="mt-6 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-            <div className="px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-mono text-slate-200">Available Event Types</span>
-            </div>
-            <div className="p-4">
-              <pre className="text-sm text-slate-300 font-mono">
-{`// Event Types
-"swap_created"   // A new swap has been created
-"swap_executed"  // A swap has been successfully executed
-"swap_failed"    // A swap has failed to execute`}
-              </pre>
-            </div>
-          </div>
-          
-          <h3 id="webhook-create" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Create Webhook</h3>
-          
-          <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-            <div className="px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-mono text-slate-200">POST /v1/webhooks/create</span>
-              <span className="ml-3 text-xs py-0.5 px-2 bg-amber-200 text-amber-900 rounded-full">Authorization required</span>
-            </div>
-            <div className="p-4">
-              <pre className="text-sm text-slate-300 font-mono">
-{`// Request
-{
-  url: String,
-  triggerEvents: ["swap_created", "swap_executed", "swap_failed"],
-  secret: String
-}
-
-// Response
-{
-  id: String,
-  url: String,
-  triggerEvents: ["swap_created", "swap_executed", "swap_failed"],
-  createdAt: String
-}`}
-              </pre>
-            </div>
-          </div>
-
-          <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-            <div className="px-4 py-2 border-b border-slate-700 bg-slate-700/30">
-              <span className="text-sm font-mono text-slate-200">Implementation Notes</span>
-            </div>
-            <div className="p-4">
-              <p className="text-sm text-slate-300">
-                Creating multiple webhooks will overwrite the previous webhook configuration.
-              </p>
-            </div>
-          </div>
-          
-          <h3 id="webhook-get" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Get Webhook</h3>
-          
-          <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-            <div className="px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-mono text-slate-200">POST /v1/webhooks/get</span>
-              <span className="ml-3 text-xs py-0.5 px-2 bg-amber-200 text-amber-900 rounded-full">Authorization required</span>
-            </div>
-            <div className="p-4">
-              <pre className="text-sm text-slate-300 font-mono">
-{`// Request
-{
-  id: String
-}
-
-// Response
-{
-  id: String,
-  url: String,
-  triggerEvents: ["swap_created", "swap_executed", "swap_failed"],
-  createdAt: String
+  id: string;
+  fromCurrency: string;
+  fromAmount: string;
+  fromWalletAddress: string;
+  fromWalletAddressExtra?: string;
+  toCurrency: string;
+  toAmount: string;
+  toWalletAddress: string;
+  toWalletAddressExtra?: string;
+  status: TransactionStatus;
+  completedAt?: string;
 }`}
               </pre>
             </div>
@@ -399,4 +379,4 @@ console.log(quote);`}
       </main>
     </div>
   )
-} 
+}
