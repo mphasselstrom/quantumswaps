@@ -11,8 +11,8 @@ export interface Currency {
 export interface SwapWidgetProps {
   fromCurrency: Currency | null
   toCurrency: Currency | null
-  setFromModalOpen: (open: boolean) => void
-  setToModalOpen: (open: boolean) => void
+  setFromModalOpen: (isOpen: boolean) => void
+  setToModalOpen: (isOpen: boolean) => void
   swapCurrencies: () => void
   isConnected: boolean
   connectWallet: () => Promise<string | null>
@@ -46,29 +46,34 @@ export interface ApiPairsResponse {
 
 // Swap Quote types
 export interface SwapQuoteRequest {
-  fromCurrency: string;
-  fromNetwork?: string;
-  toCurrency: string;
-  toNetwork?: string;
-  fromAmount?: string;
-  toAmount?: string;
-  flow?: string;
-  fromWalletAddress: string;
-  fromWalletAddressExtra?: string;
+  fromCurrency: string
+  fromNetwork: string
+  toCurrency: string
+  toNetwork: string
+  fromAmount: string
+  fromWalletAddress: string
+  flow: 'standard' | 'fixed-rate'
 }
 
 export interface SwapQuoteResponse {
-  fromAmount: string;
-  toAmount: string;
-  networkFee: string;
-  fromCurrency: string;
-  fromNetwork?: string;
-  toCurrency: string;
-  toNetwork?: string;
-  expiresIn?: string;
-  rateId: string;
-  flow?: string;
-  fromWalletAddress: string;
-  fromWalletAddressExtra?: string;
-  signature: string;
+  id: string
+  fromCurrency: string
+  fromNetwork: string
+  toCurrency: string
+  toNetwork: string
+  fromAmount: string
+  toAmount: string
+  signature: string
+  networkFee: string
+  expiry: number
+}
+
+export interface CurrencyInfo {
+  id: string;
+  code: string;
+  name: string;
+  isEnabled: boolean;
+  imageUrl?: string;
+  requiresExtraTag?: boolean;
+  networks?: string[]; // Make networks optional since it's not present in the response
 } 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import dynamic from 'next/dynamic'
-import { Currency, SwapWidgetProps, CurrencySelectorProps, ApiCurrencyPair, ApiPairsResponse, SwapQuoteRequest, SwapQuoteResponse } from './interfaces'
+import { Currency, SwapWidgetProps, CurrencySelectorProps, ApiCurrencyPair, ApiPairsResponse, SwapQuoteRequest, SwapQuoteResponse, CurrencyInfo } from './interfaces'
 import { ConnectionProvider, WalletProvider, useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
 import { clusterApiUrl, Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL, Connection } from '@solana/web3.js'
@@ -72,73 +72,95 @@ function SwapPageContent() {
         setIsLoading(true);
         setError(null);
         
-        // First set up Solana as the only FROM currency
-        const solCurrency: Currency = {
-          id: 'sol',
-          name: 'Solana',
-          symbol: 'SOL',
-          network: 'sol',
-        };
-        
-        // Set SOL as the only from currency
-        setCurrencies([solCurrency]);
-        setFromCurrency(solCurrency);
-        
-        // Fetch available TO currencies from the API
+        // Fetch all available currencies
         try {
-          const response = await fetch('/api/currency-pairs', {
-            method: 'POST',
+          const currenciesResponse = await fetch('/api/currencies', {
+            method: 'GET',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              fromCurrencies: ['sol'],
-              fromNetworks: ['sol']
-            }),
           });
           
-          if (!response.ok) {
-            throw new Error(`API request failed with status: ${response.status}`);
+          if (!currenciesResponse.ok) {
+            throw new Error(`Currencies API request failed with status: ${currenciesResponse.status}`);
           }
           
-          const data: ApiPairsResponse = await response.json();
+          const currenciesData: CurrencyInfo[] = await currenciesResponse.json();
+          
+          // Log the response for debugging
+          console.log('Currencies API response:', {
+            count: currenciesData.length,
+            sample: currenciesData.slice(0, 3)
+          });
           
           // Transform API response to our Currency interface
-          if (data.pairs && Array.isArray(data.pairs)) {
-            const toCurrenciesMap = new Map<string, Currency>();
-            
-            // Process each pair and extract unique to currencies
-            data.pairs.forEach(pair => {
-              const currencyId = `${pair.toCurrency.currency}-${pair.toCurrency.network}`;
-              if (!toCurrenciesMap.has(currencyId)) {
-                toCurrenciesMap.set(currencyId, {
-                  id: currencyId,
-                  name: pair.toCurrency.currency.toUpperCase(),
-                  symbol: pair.toCurrency.currency.toUpperCase(),
-                  network: pair.toCurrency.network,
-                });
-              }
-            });
-            
-            const availableToCurrenciesList = Array.from(toCurrenciesMap.values());
-            setAvailableToCurrencies(availableToCurrenciesList);
-            
-            // Set default to currency if available
-            if (availableToCurrenciesList.length > 0) {
-              // Try to find ETH as default TO currency, otherwise use the first one
-              const ethCurrency = availableToCurrenciesList.find(c => c.symbol.toLowerCase() === 'eth');
-              if (ethCurrency) {
-                setToCurrency(ethCurrency);
-              } else {
-                setToCurrency(availableToCurrenciesList[0]);
-              }
+          const fromCurrenciesMap = new Map<string, Currency>();
+          
+          // Process each currency - this API doesn't provide networks info
+          // so we'll create a single entry for each currency
+          currenciesData.forEach(currencyInfo => {
+            if (currencyInfo.isEnabled) {
+              // For now, assume a default network based on the currency code
+              // In a real app, you'd likely get this from another API or have it configured
+              let defaultNetwork = 'ethereum';
+              
+              // Special cases for common cryptocurrencies
+              const code = currencyInfo.code.toLowerCase();
+              if (code === 'sol') defaultNetwork = 'sol';
+              else if (code === 'btc') defaultNetwork = 'bitcoin';
+              else if (code === 'eth') defaultNetwork = 'ethereum';
+              else if (code === 'matic') defaultNetwork = 'polygon';
+              else if (code === 'avax') defaultNetwork = 'avalanche';
+              
+              const currencyId = `${currencyInfo.code}-${defaultNetwork}`;
+              fromCurrenciesMap.set(currencyId, {
+                id: currencyId,
+                name: currencyInfo.name,
+                symbol: currencyInfo.code.toUpperCase(),
+                network: defaultNetwork,
+              });
             }
-          } else {
-            throw new Error('Invalid API response format');
+          });
+          
+          const availableFromCurrencies = Array.from(fromCurrenciesMap.values());
+          setCurrencies(availableFromCurrencies);
+          
+          // Set SOL as the default FROM currency if available
+          const solCurrency = availableFromCurrencies.find(c => 
+            c.symbol.toLowerCase() === 'sol' && c.network === 'sol'
+          );
+          
+          if (solCurrency) {
+            setFromCurrency(solCurrency);
+          } else if (availableFromCurrencies.length > 0) {
+            // Fallback to first currency if SOL isn't available
+            setFromCurrency(availableFromCurrencies[0]);
           }
-        } catch (apiError) {
-          console.error('Error fetching currency pairs from API:', apiError);
-          setError('Failed to load currency pairs. Please try again later.');
+          
+          // If we have a from currency set, fetch available TO currencies
+          if (fromCurrency) {
+            await fetchToCurrencies(fromCurrency);
+          } else if (solCurrency) {
+            await fetchToCurrencies(solCurrency);
+          } else if (availableFromCurrencies.length > 0) {
+            await fetchToCurrencies(availableFromCurrencies[0]);
+          }
+          
+        } catch (currenciesApiError) {
+          console.error('Error fetching available currencies:', currenciesApiError);
+          setError('Failed to load available currencies. Please try again later.');
+          
+          // Fallback to just SOL as FROM currency
+          const solCurrency: Currency = {
+            id: 'sol-sol',
+            name: 'Solana',
+            symbol: 'SOL',
+            network: 'sol',
+          };
+          
+          setCurrencies([solCurrency]);
+          setFromCurrency(solCurrency);
+          await fetchToCurrencies(solCurrency);
         }
         
       } catch (err) {
@@ -151,6 +173,66 @@ function SwapPageContent() {
     
     loadCurrencies();
   }, []);
+  
+  // Fetch available TO currencies based on selected FROM currency
+  const fetchToCurrencies = async (selectedFromCurrency: Currency) => {
+    try {
+      // Fetch available TO currencies from the API
+      const response = await fetch('/api/currency-pairs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fromCurrencies: [selectedFromCurrency.symbol.toLowerCase()],
+          fromNetworks: [selectedFromCurrency.network]
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API request failed with status: ${response.status}`);
+      }
+      
+      const data: ApiPairsResponse = await response.json();
+      
+      // Transform API response to our Currency interface
+      if (data.pairs && Array.isArray(data.pairs)) {
+        const toCurrenciesMap = new Map<string, Currency>();
+        
+        // Process each pair and extract unique to currencies
+        data.pairs.forEach(pair => {
+          const currencyId = `${pair.toCurrency.currency}-${pair.toCurrency.network}`;
+          if (!toCurrenciesMap.has(currencyId)) {
+            toCurrenciesMap.set(currencyId, {
+              id: currencyId,
+              name: pair.toCurrency.currency.toUpperCase(),
+              symbol: pair.toCurrency.currency.toUpperCase(),
+              network: pair.toCurrency.network,
+            });
+          }
+        });
+        
+        const availableToCurrenciesList = Array.from(toCurrenciesMap.values());
+        setAvailableToCurrencies(availableToCurrenciesList);
+        
+        // Set default to currency if available
+        if (availableToCurrenciesList.length > 0) {
+          // Try to find ETH as default TO currency, otherwise use the first one
+          const ethCurrency = availableToCurrenciesList.find(c => c.symbol.toLowerCase() === 'eth');
+          if (ethCurrency) {
+            setToCurrency(ethCurrency);
+          } else {
+            setToCurrency(availableToCurrenciesList[0]);
+          }
+        }
+      } else {
+        throw new Error('Invalid API response format');
+      }
+    } catch (apiError) {
+      console.error('Error fetching currency pairs from API:', apiError);
+      setError('Failed to load currency pairs. Please try again later.');
+    }
+  };
 
   const connectWallet = async () => {
     try {
@@ -177,12 +259,14 @@ function SwapPageContent() {
   };
 
   const handleSelectFromCurrency = (currency: Currency) => {
-    setFromCurrency(currency)
-    setFromModalOpen(false)
-    // Reset toCurrency if it's the same as the new fromCurrency
-    if (toCurrency && toCurrency.id === currency.id) {
-      setToCurrency(null);
-    }
+    setFromCurrency(currency);
+    setFromModalOpen(false);
+    
+    // Reset toCurrency
+    setToCurrency(null);
+    
+    // Fetch available TO currencies based on the new FROM currency
+    fetchToCurrencies(currency);
   }
   
   const handleSelectToCurrency = (currency: Currency) => {
@@ -191,12 +275,33 @@ function SwapPageContent() {
   }
   
   const swapCurrencies = () => {
-    // Since we only support SOL as the FROM currency,
-    // we'll just log a message rather than actually swapping
-    console.log('Cannot swap currencies: SOL is the only supported FROM currency');
-    
-    // Show an alert to the user
-    alert('Currently Quantum only supports SOL as the source currency');
+    // We now support multiple FROM currencies, so implement proper swapping
+    if (fromCurrency && toCurrency) {
+      // Check if the current TO currency is in our FROM currencies list
+      const canSwap = currencies.some(c => c.id === toCurrency.id);
+      
+      if (canSwap) {
+        // Store current FROM currency to assign as new TO currency
+        const oldFromCurrency = fromCurrency;
+        
+        // Set new FROM currency (was previously TO currency)
+        setFromCurrency(toCurrency);
+        
+        // Fetch available TO currencies based on the new FROM currency
+        // This will reset toCurrency temporarily
+        fetchToCurrencies(toCurrency);
+        
+        // After fetching, check if the old FROM currency can be a TO currency
+        // Note: This is a bit of a hack since we can't await the fetchToCurrencies results easily
+        setTimeout(() => {
+          if (availableToCurrencies.some(c => c.id === oldFromCurrency.id)) {
+            setToCurrency(oldFromCurrency);
+          }
+        }, 500);
+      } else {
+        alert(`${toCurrency.symbol} on ${toCurrency.network} is not available as a source currency`);
+      }
+    }
   }
 
   return (
@@ -536,7 +641,14 @@ function SwapWidget({
   // Handle wallet connection for the swap
   const useConnectedWallet = () => {
     if (!isConnected) {
-      return connectWallet();
+      if (fromCurrency && fromCurrency.network === 'sol') {
+        return connectWallet();
+      } else {
+        // For non-Solana currencies, we'd need different wallet connection logic
+        // For now, just show an alert that this is not implemented
+        alert(`Connection for ${fromCurrency?.symbol} on ${fromCurrency?.network} is not implemented yet.`);
+        return null;
+      }
     }
     return Promise.resolve(userAccount);
   };
@@ -959,12 +1071,13 @@ function SwapWidget({
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <button 
-                    className="flex items-center bg-slate-800 hover:bg-slate-700 transition duration-150 ease-in-out py-1 px-2 rounded-full cursor-pointer"
+                    className="flex items-center bg-slate-800 hover:bg-slate-700 transition duration-150 ease-in-out py-1 px-3 rounded-full cursor-pointer"
                     onClick={() => setFromModalOpen(true)}
                   >
                     {fromCurrency ? (
                       <>
                         <span className="mr-1 text-slate-300">{fromCurrency.symbol}</span>
+                        <span className="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full text-slate-400 mr-1">{fromCurrency.network}</span>
                       </>
                     ) : (
                       <span className="mr-1 text-slate-300">Select</span>
@@ -990,11 +1103,10 @@ function SwapWidget({
           <div className="relative h-8 z-10">
             <div className="absolute left-1/2 transform -translate-x-1/2 -mt-3 -mb-3">
               <button 
-                className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full p-2 shadow-lg hover:shadow-xl transition duration-150 ease-in-out cursor-not-allowed opacity-50"
+                className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full p-2 shadow-lg hover:shadow-xl transition duration-150 ease-in-out cursor-pointer"
                 onClick={swapCurrencies}
-                disabled={true}
                 aria-label="Swap direction"
-                title="Only SOL is supported as the source currency"
+                title="Swap currencies when possible"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-500">
                   <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -1016,12 +1128,13 @@ function SwapWidget({
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <button 
-                    className="flex items-center bg-slate-800 hover:bg-slate-700 transition duration-150 ease-in-out py-1 px-2 rounded-full cursor-pointer"
+                    className="flex items-center bg-slate-800 hover:bg-slate-700 transition duration-150 ease-in-out py-1 px-3 rounded-full cursor-pointer"
                     onClick={() => setToModalOpen(true)}
                   >
                     {toCurrency ? (
                       <>
                         <span className="mr-1 text-slate-300">{toCurrency.symbol}</span>
+                        <span className="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full text-slate-400 mr-1">{toCurrency.network}</span>
                       </>
                     ) : (
                       <span className="mr-1 text-slate-300">Select</span>
@@ -1046,13 +1159,15 @@ function SwapWidget({
           {/* Recipient Address Field */}
           <div className="mb-5">
             <div className="flex justify-between mb-2">
-              <label className="text-sm text-slate-400 font-medium">Recipient Address ({toCurrency?.symbol})</label>
+              <label className="text-sm text-slate-400 font-medium">
+                {toCurrency ? `${toCurrency.symbol} Recipient Address (${toCurrency.network})` : 'Recipient Address'}
+              </label>
             </div>
             <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
               <input
                 type="text"
                 className="w-full bg-transparent text-sm text-slate-200 focus:outline-none border-none font-mono"
-                placeholder={`Enter ${toCurrency?.symbol || 'destination'} wallet address`}
+                placeholder={toCurrency ? `Enter ${toCurrency.symbol} (${toCurrency.network}) wallet address` : 'Enter destination wallet address'}
                 value={recipientAddress}
                 onChange={(e) => setRecipientAddress(e.target.value)}
               />
@@ -1154,8 +1269,19 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
   
   const filteredCurrencies = currencies.filter(currency => 
     currency.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    currency.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+    currency.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    currency.network.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  // Group currencies by symbol for better organization
+  const groupedCurrencies = filteredCurrencies.reduce((acc, currency) => {
+    const key = currency.symbol;
+    if (!acc[key]) {
+      acc[key] = [];
+    }
+    acc[key].push(currency);
+    return acc;
+  }, {} as Record<string, Currency[]>);
   
   return (
     <div 
@@ -1182,24 +1308,40 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
           <input
             ref={searchInputRef}
             type="text"
-            placeholder="Search by name or symbol"
-            className="form-input w-full bg-slate-900 mb-4 sticky top-[65px] z-10"
+            placeholder="Search by name, symbol or network"
+            className="w-full bg-slate-900 rounded-lg border border-slate-700 px-4 py-2 mb-4 text-slate-200 focus:outline-none focus:border-purple-500"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <div className="max-h-[50vh] overflow-y-auto pb-2">
-            {filteredCurrencies.map((currency) => (
-              <button
-                key={currency.id}
-                className="w-full text-left p-3 hover:bg-slate-700 rounded-lg mb-2 flex items-center transition duration-150 ease-in-out cursor-pointer"
-                onClick={() => onSelect(currency)}
-              >
-                <div>
-                  <div className="text-slate-200 font-medium">{currency.name}</div>
-                  <div className="text-slate-400 text-sm">{currency.symbol} • {currency.network}</div>
-                </div>
-              </button>
+            {Object.entries(groupedCurrencies).map(([symbol, currenciesForSymbol]) => (
+              <div key={symbol} className="mb-4">
+                <div className="text-sm text-purple-400 font-medium mb-1 px-1">{symbol}</div>
+                {currenciesForSymbol.map((currency) => (
+                  <button
+                    key={currency.id}
+                    className="w-full text-left p-3 hover:bg-slate-700 rounded-lg mb-2 flex items-center transition duration-150 ease-in-out cursor-pointer"
+                    onClick={() => onSelect(currency)}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div>
+                        <div className="text-slate-200 font-medium">{currency.name}</div>
+                        <div className="text-slate-400 text-sm">{currency.symbol}</div>
+                      </div>
+                      <div className="bg-slate-900 px-2 py-1 rounded-full text-xs text-slate-300">
+                        {currency.network}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
             ))}
+            
+            {filteredCurrencies.length === 0 && (
+              <div className="text-center text-slate-400 py-6">
+                No currencies found matching "{searchQuery}"
+              </div>
+            )}
           </div>
         </div>
       </div>
