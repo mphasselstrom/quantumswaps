@@ -111,12 +111,35 @@ export default function Documentation() {
             Configure webhooks to notify your services when important events occur.
           </p>
           
+          <h3 id="required-headers" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Required Headers</h3>
+          <p className="mt-4 text-slate-300">
+            For all API calls, include the <code className="text-blue-400">x-pk-key</code> header.
+            For execute calls, include both <code className="text-blue-400">x-pk-key</code> and <code className="text-blue-400">x-sk-key</code> headers.
+          </p>
+
+          <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
+            <div className="p-4">
+              <pre className="text-sm text-slate-300 font-mono">
+{`// Headers for all calls
+{
+  'Content-Type': 'application/json',
+  'x-pk-key': 'YOUR_PUBLIC_KEY'
+}
+
+// Additional header for execute calls
+{
+  'x-sk-key': 'YOUR_SECRET_KEY'
+}`}
+              </pre>
+            </div>
+          </div>
+          
           <h3 id="webhook-create" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Create Webhook</h3>
           
           <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
             <div className="px-4 py-2 border-b border-slate-700">
               <span className="text-sm font-mono text-slate-200">POST /v1/webhooks/create</span>
-              <span className="ml-3 text-xs py-0.5 px-2 bg-yellow-200 text-yellow-800 rounded-full">Authorization required</span>
+              <span className="ml-3 text-xs py-0.5 px-2 bg-yellow-200 text-yellow-800 rounded-full">PK Key required</span>
             </div>
             <div className="p-4">
               <pre className="text-sm text-slate-300 font-mono">
@@ -143,7 +166,7 @@ export default function Documentation() {
           <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
             <div className="px-4 py-2 border-b border-slate-700">
               <span className="text-sm font-mono text-slate-200">POST /v1/webhooks/get</span>
-              <span className="ml-3 text-xs py-0.5 px-2 bg-yellow-200 text-yellow-800 rounded-full">Authorization required</span>
+              <span className="ml-3 text-xs py-0.5 px-2 bg-yellow-200 text-yellow-800 rounded-full">PK Key required</span>
             </div>
             <div className="p-4">
               <pre className="text-sm text-slate-300 font-mono">

@@ -30,7 +30,7 @@ const pairsResponse = await fetch('https://api.quantumswaps.xyz/v1/currencies/pa
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'  // Replace with your actual API key
+    'x-pk-key': 'YOUR_PUBLIC_KEY'  // Required for all API calls
   },
   body: JSON.stringify({
     fromCurrencies: ['BTC'],
@@ -48,7 +48,7 @@ const quoteResponse = await fetch('https://api.quantumswaps.xyz/v1/swap/quote', 
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'  // Replace with your actual API key
+    'x-pk-key': 'YOUR_PUBLIC_KEY'  // Required for all API calls
   },
   body: JSON.stringify({
     fromCurrencies: ['BTC'],
@@ -68,7 +68,8 @@ const executeResponse = await fetch('https://api.quantumswaps.xyz/v1/swap/execut
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'  // Replace with your actual API key
+    'x-pk-key': 'YOUR_PUBLIC_KEY',  // Required for all API calls
+    'x-sk-key': 'YOUR_SECRET_KEY'   // Required only for swap execution
   },
   body: JSON.stringify({
     signature: quote.signature,
@@ -143,7 +144,7 @@ const pairsResponse = await fetch('https://api.quantumswaps.xyz/v1/currencies/pa
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'
+    'x-pk-key': 'YOUR_PUBLIC_KEY'
   },
   body: JSON.stringify({
     fromCurrencies: ['BTC'],
@@ -161,7 +162,7 @@ const quoteResponse = await fetch('https://api.quantumswaps.xyz/v1/swap/quote', 
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'
+    'x-pk-key': 'YOUR_PUBLIC_KEY'
   },
   body: JSON.stringify({
     fromCurrencies: ['BTC'],
@@ -181,7 +182,8 @@ const executeResponse = await fetch('https://api.quantumswaps.xyz/v1/swap/execut
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'
+    'x-pk-key': 'YOUR_PUBLIC_KEY',
+    'x-sk-key': 'YOUR_SECRET_KEY'
   },
   body: JSON.stringify({
     signature: quote.signature,
@@ -233,6 +235,32 @@ console.log('Swap transaction:', transaction);`}
           </div>
           
           <h2 className="text-2xl font-bold tracking-tight text-white scroll-mt-24 mt-16">API Endpoints</h2>
+          
+          <h3 id="authentication" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Authentication Headers</h3>
+          <p className="text-slate-300">
+            All API requests require authentication headers. Include the <code className="text-blue-300">x-pk-key</code> header in all API calls. 
+            For swap execution, you must additionally include the <code className="text-blue-300">x-sk-key</code> header.
+          </p>
+          
+          <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
+            <div className="px-4 py-2 border-b border-slate-700">
+              <span className="text-sm font-mono text-slate-200">Required Headers</span>
+            </div>
+            <div className="p-4">
+              <pre className="text-sm text-slate-300 font-mono">
+{`// Headers for all API calls
+{
+  'Content-Type': 'application/json',
+  'x-pk-key': 'YOUR_PUBLIC_KEY'
+}
+
+// Additional header for swap execution
+{
+  'x-sk-key': 'YOUR_SECRET_KEY'  // Required only for /v1/swap/execute
+}`}
+              </pre>
+            </div>
+          </div>
           
           <h3 id="currencies-info" className="text-xl font-bold tracking-tight text-white scroll-mt-24 mt-10">Currencies Info</h3>
           <p className="text-slate-300">
@@ -345,7 +373,7 @@ console.log('Swap transaction:', transaction);`}
           <div className="mt-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
             <div className="px-4 py-2 border-b border-slate-700">
               <span className="text-sm font-mono text-slate-200">POST /v1/swap/execute</span>
-              <span className="ml-3 text-xs py-0.5 px-2 bg-amber-200 text-amber-900 rounded-full">Authorization required</span>
+              <span className="ml-3 text-xs py-0.5 px-2 bg-amber-200 text-amber-900 rounded-full">SK Key required</span>
             </div>
             <div className="p-4">
               <pre className="text-sm text-slate-300 font-mono">
