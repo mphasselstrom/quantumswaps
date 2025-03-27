@@ -112,12 +112,38 @@ function SwapPageContent() {
               else if (code === 'matic') defaultNetwork = 'polygon';
               else if (code === 'avax') defaultNetwork = 'avalanche';
               
+              // Ensure we have an imageUrl - use fallback if needed
+              let imageUrl = currencyInfo.imageUrl || '';
+              
+              // Set fallback image URLs for common cryptocurrencies
+              if (!imageUrl) {
+                // Use the cryptocurrency-icons library for reliable icons
+                if (code === 'sol') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/sol.png';
+                else if (code === 'btc') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/btc.png'; 
+                else if (code === 'eth') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/eth.png';
+                else if (code === 'usdt') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/usdt.png';
+                else if (code === 'usdc') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/usdc.png';
+                else if (code === 'bnb') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/bnb.png';
+                else if (code === 'xrp') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/xrp.png';
+                else if (code === 'ada') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/ada.png';
+                else if (code === 'avax') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/avax.png';
+                else if (code === 'doge') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/doge.png';
+                else if (code === 'dot') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/dot.png';
+                else if (code === 'matic') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/matic.png';
+                else if (code === 'link') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/link.png';
+                else {
+                  // Try to form a generic URL for other tokens
+                  imageUrl = `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/${code}.png`;
+                }
+              }
+              
               const currencyId = `${currencyInfo.code}-${defaultNetwork}`;
               fromCurrenciesMap.set(currencyId, {
                 id: currencyId,
                 name: currencyInfo.name,
                 symbol: currencyInfo.code.toUpperCase(),
                 network: defaultNetwork,
+                imageUrl: imageUrl,
               });
             }
           });
@@ -156,6 +182,7 @@ function SwapPageContent() {
             name: 'Solana',
             symbol: 'SOL',
             network: 'sol',
+            imageUrl: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/sol.png',
           };
           
           setCurrencies([solCurrency]);
@@ -203,11 +230,44 @@ function SwapPageContent() {
         data.pairs.forEach(pair => {
           const currencyId = `${pair.toCurrency.currency}-${pair.toCurrency.network}`;
           if (!toCurrenciesMap.has(currencyId)) {
+            // Find if we have any info about this currency in our FROM currencies map
+            // to reuse image URL if available
+            const existingCurrency = Array.from(currencies).find(c => 
+              c.symbol.toLowerCase() === pair.toCurrency.currency.toLowerCase()
+            );
+            
+            // Set default image URLs for common currencies if we don't have one
+            let imageUrl = existingCurrency?.imageUrl || '';
+            
+            // Fallback images for common cryptocurrencies
+            const code = pair.toCurrency.currency.toLowerCase();
+            if (!imageUrl) {
+              // The cdn.jsdelivr.net URLs are a reliable source for cryptocurrency icons
+              if (code === 'sol') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/sol.png';
+              else if (code === 'btc') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/btc.png'; 
+              else if (code === 'eth') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/eth.png';
+              else if (code === 'usdt') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/usdt.png';
+              else if (code === 'usdc') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/usdc.png';
+              else if (code === 'bnb') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/bnb.png';
+              else if (code === 'xrp') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/xrp.png';
+              else if (code === 'ada') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/ada.png';
+              else if (code === 'avax') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/avax.png';
+              else if (code === 'doge') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/doge.png';
+              else if (code === 'dot') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/dot.png';
+              else if (code === 'link') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/link.png';
+              else if (code === 'matic') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/matic.png';
+              else {
+                // Try to form a generic URL for other tokens
+                imageUrl = `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/${code}.png`;
+              }
+            }
+            
             toCurrenciesMap.set(currencyId, {
               id: currencyId,
               name: pair.toCurrency.currency.toUpperCase(),
               symbol: pair.toCurrency.currency.toUpperCase(),
               network: pair.toCurrency.network,
+              imageUrl: imageUrl,
             });
           }
         });
@@ -1076,13 +1136,27 @@ function SwapWidget({
                   >
                     {fromCurrency ? (
                       <>
-                        <span className="mr-1 text-slate-300">{fromCurrency.symbol}</span>
-                        <span className="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full text-slate-400 mr-1">{fromCurrency.network}</span>
+                        {fromCurrency.imageUrl ? (
+                          <img 
+                            src={fromCurrency.imageUrl} 
+                            alt={fromCurrency.symbol}
+                            className="w-5 h-5 mr-2 rounded-full"
+                            onError={(e) => {
+                              // If image fails to load, replace with a fallback
+                              (e.target as HTMLImageElement).src = 'https://placehold.co/20x20/6b21a8/ffffff?text=' + fromCurrency.symbol.charAt(0);
+                            }}
+                          />
+                        ) : (
+                          <div className="w-5 h-5 mr-2 rounded-full bg-purple-800 flex items-center justify-center text-white font-medium text-xs">
+                            {fromCurrency.symbol.charAt(0)}
+                          </div>
+                        )}
+                        <span className="text-slate-300">{fromCurrency.symbol}</span>
                       </>
                     ) : (
                       <span className="mr-1 text-slate-300">Select</span>
                     )}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 ml-1">
                       <path d="m6 9 6 6 6-6"/>
                     </svg>
                   </button>
@@ -1133,13 +1207,27 @@ function SwapWidget({
                   >
                     {toCurrency ? (
                       <>
-                        <span className="mr-1 text-slate-300">{toCurrency.symbol}</span>
-                        <span className="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full text-slate-400 mr-1">{toCurrency.network}</span>
+                        {toCurrency.imageUrl ? (
+                          <img 
+                            src={toCurrency.imageUrl} 
+                            alt={toCurrency.symbol}
+                            className="w-5 h-5 mr-2 rounded-full"
+                            onError={(e) => {
+                              // If image fails to load, replace with a fallback
+                              (e.target as HTMLImageElement).src = 'https://placehold.co/20x20/6b21a8/ffffff?text=' + toCurrency.symbol.charAt(0);
+                            }}
+                          />
+                        ) : (
+                          <div className="w-5 h-5 mr-2 rounded-full bg-purple-800 flex items-center justify-center text-white font-medium text-xs">
+                            {toCurrency.symbol.charAt(0)}
+                          </div>
+                        )}
+                        <span className="text-slate-300">{toCurrency.symbol}</span>
                       </>
                     ) : (
                       <span className="mr-1 text-slate-300">Select</span>
                     )}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 ml-1">
                       <path d="m6 9 6 6 6-6"/>
                     </svg>
                   </button>
@@ -1176,20 +1264,67 @@ function SwapWidget({
 
           {/* Rate Display */}
           {fromCurrency && toCurrency && fromAmount && toAmount && (
-            <div className="bg-slate-900/50 rounded-lg p-3 mb-4">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-400">
+            <div className="bg-slate-900/50 rounded-lg p-4 mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-slate-400">
                   Rate ({rateType === 'standard' ? 'Floating' : 'Fixed'})
                 </span>
-                <span className="text-slate-300">
-                  1 {fromCurrency.symbol} ≈ {(parseFloat(toAmount) / parseFloat(fromAmount)).toFixed(6)} {toCurrency.symbol}
-                </span>
+                <div className="flex items-center">
+                  <div className="flex items-center mr-2">
+                    {fromCurrency.imageUrl ? (
+                      <img 
+                        src={fromCurrency.imageUrl} 
+                        alt={fromCurrency.symbol}
+                        className="w-4 h-4 mr-1" 
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://placehold.co/16x16/6b21a8/ffffff?text=' + fromCurrency.symbol.charAt(0);
+                        }}
+                      />
+                    ) : (
+                      <div className="w-4 h-4 mr-1 rounded-full bg-purple-800 flex items-center justify-center text-white font-medium text-xs">
+                        {fromCurrency.symbol.charAt(0)}
+                      </div>
+                    )}
+                    <span className="text-slate-300 text-sm">1 {fromCurrency.symbol}</span>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 mx-1">
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
+                  </svg>
+                  <div className="flex items-center ml-1">
+                    {toCurrency.imageUrl ? (
+                      <img 
+                        src={toCurrency.imageUrl} 
+                        alt={toCurrency.symbol}
+                        className="w-4 h-4 mr-1" 
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://placehold.co/16x16/6b21a8/ffffff?text=' + toCurrency.symbol.charAt(0);
+                        }}
+                      />
+                    ) : (
+                      <div className="w-4 h-4 mr-1 rounded-full bg-purple-800 flex items-center justify-center text-white font-medium text-xs">
+                        {toCurrency.symbol.charAt(0)}
+                      </div>
+                    )}
+                    <span className="text-slate-300 text-sm">{(parseFloat(toAmount) / parseFloat(fromAmount)).toFixed(6)} {toCurrency.symbol}</span>
+                  </div>
+                </div>
               </div>
               {quoteData && (
-                <div className="flex justify-between items-center text-sm mt-2">
-                  <span className="text-slate-400">Network Fee</span>
-                  <span className="text-slate-300">{quoteData.networkFee} {fromCurrency.symbol}</span>
-                </div>
+                <>
+                  <div className="flex justify-between items-center text-sm mt-2 pb-2 border-b border-slate-800">
+                    <span className="text-slate-400">Network Fee</span>
+                    <span className="text-slate-300">{quoteData.networkFee} {fromCurrency.symbol}</span>
+                  </div>
+                  {quoteData.expiry && (
+                    <div className="flex justify-between items-center text-sm mt-2">
+                      <span className="text-slate-400">Quote expires in</span>
+                      <span className="text-slate-300">
+                        {Math.max(0, Math.floor((quoteData.expiry - Date.now()/1000) / 60))} minutes
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -1316,7 +1451,11 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
           <div className="max-h-[50vh] overflow-y-auto pb-2">
             {Object.entries(groupedCurrencies).map(([symbol, currenciesForSymbol]) => (
               <div key={symbol} className="mb-4">
-                <div className="text-sm text-purple-400 font-medium mb-1 px-1">{symbol}</div>
+                <div className="flex items-center px-1 mb-2">
+                  <div className="text-sm text-purple-400 font-medium">{symbol}</div>
+                  <div className="ml-2 text-xs text-slate-500">({currenciesForSymbol.length} {currenciesForSymbol.length === 1 ? 'network' : 'networks'})</div>
+                  <div className="ml-auto flex-grow border-t border-slate-700 mx-3"></div>
+                </div>
                 {currenciesForSymbol.map((currency) => (
                   <button
                     key={currency.id}
@@ -1324,9 +1463,26 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
                     onClick={() => onSelect(currency)}
                   >
                     <div className="flex items-center justify-between w-full">
-                      <div>
-                        <div className="text-slate-200 font-medium">{currency.name}</div>
-                        <div className="text-slate-400 text-sm">{currency.symbol}</div>
+                      <div className="flex items-center">
+                        {currency.imageUrl ? (
+                          <img 
+                            src={currency.imageUrl} 
+                            alt={currency.symbol}
+                            className="w-6 h-6 mr-3 rounded-full"
+                            onError={(e) => {
+                              // If image fails to load, replace with a fallback
+                              (e.target as HTMLImageElement).src = 'https://placehold.co/24x24/6b21a8/ffffff?text=' + currency.symbol.charAt(0);
+                            }}
+                          />
+                        ) : (
+                          <div className="w-6 h-6 mr-3 rounded-full bg-purple-800 flex items-center justify-center text-white font-medium text-xs">
+                            {currency.symbol.charAt(0)}
+                          </div>
+                        )}
+                        <div>
+                          <div className="text-slate-200 font-medium">{currency.name}</div>
+                          <div className="text-slate-400 text-sm">{currency.symbol}</div>
+                        </div>
                       </div>
                       <div className="bg-slate-900 px-2 py-1 rounded-full text-xs text-slate-300">
                         {currency.network}

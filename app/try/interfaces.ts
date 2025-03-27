@@ -4,6 +4,7 @@ export interface Currency {
   name: string
   symbol: string
   network: string
+  imageUrl?: string
   extraIdName?: string
   contractAddress?: string
 }
