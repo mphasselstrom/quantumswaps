@@ -8,10 +8,12 @@ export async function POST(request: Request) {
     console.log('Sending execute request with body:', body);
 
     // Make the API call to the external service
-    const response = await fetch('https://edc8-2a09-bac1-60a0-260-00-3cc-3c.ngrok-free.app/v1/swap/execute', {
+    const response = await fetch('https://c474-2a09-bac1-60a0-260-00-3cc-3c.ngrok-free.app/v1/swap/execute', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-pk-key': 'pk_live_-bL2S5dJmroQ7BlO5n7B-T347xZRGJBI',
+        'x-sk-key': 'sk_live_qf3ytXvVlz2N6r7wrGCuOIyVvYFhPkUJ'
       },
       body: JSON.stringify(body),
     });

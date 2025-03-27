@@ -8,10 +8,11 @@ export async function POST(request: Request) {
     console.log('Sending quote request with body:', body);
 
     // Make the API call to the external service
-    const response = await fetch('https://edc8-2a09-bac1-60a0-260-00-3cc-3c.ngrok-free.app/v1/swap/quote', {
+    const response = await fetch('https://c474-2a09-bac1-60a0-260-00-3cc-3c.ngrok-free.app/v1/swap/quote', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-pk-key': 'pk_live_-bL2S5dJmroQ7BlO5n7B-T347xZRGJBI'
       },
       body: JSON.stringify(body),
     });
