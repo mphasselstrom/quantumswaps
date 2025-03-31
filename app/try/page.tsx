@@ -222,25 +222,37 @@ function SwapPageContent() {
       
       const data: ApiPairsResponse = await response.json();
       
+      // Log the raw API response (first 5 items)
+      console.log('Currency pairs API response:', {
+        pairsCount: data.pairs?.length || 0,
+        sample: data.pairs?.slice(0, 5) || []
+      });
+      
       // Transform API response to our Currency interface
       if (data.pairs && Array.isArray(data.pairs)) {
         const toCurrenciesMap = new Map<string, Currency>();
         
         // Process each pair and extract unique to currencies
         data.pairs.forEach(pair => {
-          const currencyId = `${pair.toCurrency.currency}-${pair.toCurrency.network}`;
+          // Add null checks to prevent errors
+          if (!pair.toCurrency) {
+            console.warn('Received invalid pair without toCurrency data:', pair);
+            return; // Skip this pair
+          }
+          
+          const currencyId = `${pair.toCurrency}-${pair.toNetwork}`;
           if (!toCurrenciesMap.has(currencyId)) {
             // Find if we have any info about this currency in our FROM currencies map
             // to reuse image URL if available
             const existingCurrency = Array.from(currencies).find(c => 
-              c.symbol.toLowerCase() === pair.toCurrency.currency.toLowerCase()
+              c.symbol.toLowerCase() === pair.toCurrency.toLowerCase()
             );
             
             // Set default image URLs for common currencies if we don't have one
             let imageUrl = existingCurrency?.imageUrl || '';
             
             // Fallback images for common cryptocurrencies
-            const code = pair.toCurrency.currency.toLowerCase();
+            const code = pair.toCurrency.toLowerCase();
             if (!imageUrl) {
               // The cdn.jsdelivr.net URLs are a reliable source for cryptocurrency icons
               if (code === 'sol') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/sol.png';
@@ -264,15 +276,22 @@ function SwapPageContent() {
             
             toCurrenciesMap.set(currencyId, {
               id: currencyId,
-              name: pair.toCurrency.currency.toUpperCase(),
-              symbol: pair.toCurrency.currency.toUpperCase(),
-              network: pair.toCurrency.network,
+              name: pair.toCurrency.toUpperCase(),
+              symbol: pair.toCurrency.toUpperCase(),
+              network: pair.toNetwork,
               imageUrl: imageUrl,
             });
           }
         });
         
         const availableToCurrenciesList = Array.from(toCurrenciesMap.values());
+        
+        // Log the processed TO currencies (first 5 items)
+        console.log('Processed TO currencies:', {
+          count: availableToCurrenciesList.length,
+          sample: availableToCurrenciesList.slice(0, 5)
+        });
+        
         setAvailableToCurrencies(availableToCurrenciesList);
         
         // Set default to currency if available

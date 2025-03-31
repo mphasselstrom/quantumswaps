@@ -31,14 +31,10 @@ export interface CurrencySelectorProps {
 
 // API types
 export interface ApiCurrencyPair {
-  fromCurrency: {
-    currency: string
-    network: string
-  }
-  toCurrency: {
-    currency: string
-    network: string
-  }
+  fromCurrency: string;
+  fromNetwork: string;
+  toCurrency: string;
+  toNetwork: string;
 }
 
 export interface ApiPairsResponse {
