@@ -5,7 +5,7 @@ export async function GET() {
     console.log('Currencies info API called');
     
     // Make the API call to the external service to get all available currencies
-    const response = await fetch('https://c097-2a09-bac1-60a0-260-00-3cc-68.ngrok-free.app/v1/currencies/currencies_info', {
+    const response = await fetch('https://0e6e-2a09-bac0-1000-1f5-00-3cc-71.ngrok-free.app/v1/currencies/currencies_info', {
       method: 'POST', // Despite being a GET request on our end, the external API expects POST
       headers: {
         'Content-Type': 'application/json',
