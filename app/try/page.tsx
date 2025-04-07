@@ -540,7 +540,6 @@ function SwapWidget({
   const [quoteData, setQuoteData] = useState<SwapQuoteResponse | null>(null)
   const [quoteLoading, setQuoteLoading] = useState(false)
   const [quoteError, setQuoteError] = useState<string | null>(null)
-  const [rateType, setRateType] = useState<'standard' | 'fixed-rate'>('standard')
   const [recipientAddress, setRecipientAddress] = useState<string>('')
   const [quoteSignature, setQuoteSignature] = useState<string | null>(null)
   const [transactionData, setTransactionData] = useState<any>(null)
@@ -609,7 +608,7 @@ function SwapWidget({
         toNetwork: toCurrency.network,
         fromAmount: amount,
         fromWalletAddress: walletAddress,
-        flow: rateType, // Use the selected rate type
+        flow: 'standard'
       };
       
       console.log('Sending quote request:', quoteRequest);
@@ -735,15 +734,6 @@ function SwapWidget({
   // Handle input change
   const handleFromAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFromAmount(e.target.value);
-  };
-  
-  // Handle toggle change
-  const handleRateTypeChange = (newType: 'standard' | 'fixed-rate') => {
-    setRateType(newType);
-    // Re-fetch quote with new rate type if we have the necessary data
-    if (fromAmount && parseFloat(fromAmount) > 0) {
-      fetchQuote(fromAmount);
-    }
   };
   
   // Add logging to initiateSwap function to see when isLoading is set to true
@@ -1102,41 +1092,7 @@ function SwapWidget({
 
       {!transactionData && !transactionStatus && (
         <>
-          {/* Rate Type Toggle */}
-          <div className="mb-4">
-            <div className="flex justify-between mb-2">
-              <label className="text-sm text-slate-400 font-medium">Rate Type</label>
-              <div className="text-sm text-slate-500">
-                {quoteLoading && 'Updating...'}
-              </div>
-            </div>
-            <div className="flex p-1 bg-slate-900 rounded-lg">
-              <button
-                className={`flex-1 py-2 px-4 rounded-md text-center transition-colors duration-200 text-sm font-medium cursor-pointer ${
-                  rateType === 'standard'
-                    ? 'bg-purple-600 text-white'
-                    : 'text-slate-400 hover:bg-slate-800'
-                }`}
-                onClick={() => handleRateTypeChange('standard')}
-                disabled={quoteLoading}
-                title="Floating rate: The exchange rate may change slightly between quote and execution. Usually offers better rates but with small market risk."
-              >
-                Floating
-              </button>
-              <button
-                className={`flex-1 py-2 px-4 rounded-md text-center transition-colors duration-200 text-sm font-medium cursor-pointer ${
-                  rateType === 'fixed-rate'
-                    ? 'bg-purple-600 text-white'
-                    : 'text-slate-400 hover:bg-slate-800'
-                }`}
-                onClick={() => handleRateTypeChange('fixed-rate')}
-                disabled={quoteLoading}
-                title="Fixed rate: The exchange rate is guaranteed not to change between quote and execution. May have slightly higher fees but eliminates market risk."
-              >
-                Fixed
-              </button>
-            </div>
-          </div>
+          {/* Rate Type Indicator - removed completely */}
 
           {/* From Section */}
           <div>
@@ -1286,7 +1242,7 @@ function SwapWidget({
             <div className="bg-slate-900/50 rounded-lg p-4 mb-4">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm text-slate-400">
-                  Rate ({rateType === 'standard' ? 'Floating' : 'Fixed'})
+                  Rate
                 </span>
                 <div className="flex items-center">
                   <div className="flex items-center mr-2">

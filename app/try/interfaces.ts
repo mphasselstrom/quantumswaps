@@ -49,7 +49,7 @@ export interface SwapQuoteRequest {
   toNetwork: string
   fromAmount: string
   fromWalletAddress: string
-  flow: 'standard' | 'fixed-rate'
+  flow: 'standard'
 }
 
 export interface SwapQuoteResponse {
