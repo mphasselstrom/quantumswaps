@@ -149,27 +149,42 @@ function SwapPageContent() {
           });
           
           const availableFromCurrencies = Array.from(fromCurrenciesMap.values());
+          
+          // First update the currencies state
           setCurrencies(availableFromCurrencies);
           
-          // Set SOL as the default FROM currency if available
+          // Find SOL as the default FROM currency if available
           const solCurrency = availableFromCurrencies.find(c => 
             c.symbol.toLowerCase() === 'sol' && c.network === 'sol'
           );
           
+          // Set the default FROM currency
+          let defaultFromCurrency: Currency | null = null;
+          
           if (solCurrency) {
-            setFromCurrency(solCurrency);
+            defaultFromCurrency = solCurrency;
+            console.log('Setting SOL as default FROM currency:', solCurrency);
           } else if (availableFromCurrencies.length > 0) {
             // Fallback to first currency if SOL isn't available
-            setFromCurrency(availableFromCurrencies[0]);
+            defaultFromCurrency = availableFromCurrencies[0];
+            console.log('Setting first currency as default FROM currency:', defaultFromCurrency);
           }
           
-          // If we have a from currency set, fetch available TO currencies
-          if (fromCurrency) {
-            await fetchToCurrencies(fromCurrency);
-          } else if (solCurrency) {
-            await fetchToCurrencies(solCurrency);
-          } else if (availableFromCurrencies.length > 0) {
-            await fetchToCurrencies(availableFromCurrencies[0]);
+          // Update the fromCurrency state
+          if (defaultFromCurrency) {
+            setFromCurrency(defaultFromCurrency);
+            
+            // Now fetch available TO currencies with the selected FROM currency
+            console.log('Fetching TO currencies with default FROM currency:', defaultFromCurrency);
+            try {
+              await fetchToCurrencies(defaultFromCurrency);
+            } catch (toCurrenciesError) {
+              console.error('Error fetching TO currencies:', toCurrenciesError);
+              setError('Failed to load available TO currencies. Please try again later.');
+            }
+          } else {
+            console.error('No default FROM currency available');
+            setError('No currencies available. Please try again later.');
           }
           
         } catch (currenciesApiError) {
@@ -187,7 +202,12 @@ function SwapPageContent() {
           
           setCurrencies([solCurrency]);
           setFromCurrency(solCurrency);
-          await fetchToCurrencies(solCurrency);
+          
+          try {
+            await fetchToCurrencies(solCurrency);
+          } catch (fallbackError) {
+            console.error('Error fetching TO currencies with fallback SOL:', fallbackError);
+          }
         }
         
       } catch (err) {
@@ -203,21 +223,27 @@ function SwapPageContent() {
   
   // Fetch available TO currencies based on selected FROM currency
   const fetchToCurrencies = async (selectedFromCurrency: Currency) => {
+    console.log('fetchToCurrencies called with:', selectedFromCurrency);
     try {
       // Fetch available TO currencies from the API
+      const requestBody = {
+        fromCurrencies: [selectedFromCurrency.symbol.toLowerCase()],
+        fromNetworks: [selectedFromCurrency.network]
+      };
+      console.log('Sending currency-pairs request:', requestBody);
+      
       const response = await fetch('/api/currency-pairs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          fromCurrencies: [selectedFromCurrency.symbol.toLowerCase()],
-          fromNetworks: [selectedFromCurrency.network]
-        }),
+        body: JSON.stringify(requestBody),
       });
       
       if (!response.ok) {
-        throw new Error(`API request failed with status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('API response not OK:', response.status, errorText);
+        throw new Error(`API request failed with status: ${response.status} - ${errorText}`);
       }
       
       const data: ApiPairsResponse = await response.json();
@@ -225,7 +251,8 @@ function SwapPageContent() {
       // Log the raw API response (first 5 items)
       console.log('Currency pairs API response:', {
         pairsCount: data.pairs?.length || 0,
-        sample: data.pairs?.slice(0, 5) || []
+        sample: data.pairs?.slice(0, 5) || [],
+        hasData: !!data.pairs && Array.isArray(data.pairs)
       });
       
       // Transform API response to our Currency interface
@@ -292,6 +319,8 @@ function SwapPageContent() {
           sample: availableToCurrenciesList.slice(0, 5)
         });
         
+        // Log before setting state
+        console.log('Setting availableToCurrencies:', availableToCurrenciesList.length);
         setAvailableToCurrencies(availableToCurrenciesList);
         
         // Set default to currency if available
@@ -299,12 +328,17 @@ function SwapPageContent() {
           // Try to find ETH as default TO currency, otherwise use the first one
           const ethCurrency = availableToCurrenciesList.find(c => c.symbol.toLowerCase() === 'eth');
           if (ethCurrency) {
+            console.log('Setting default toCurrency to ETH:', ethCurrency);
             setToCurrency(ethCurrency);
           } else {
+            console.log('Setting default toCurrency to first in list:', availableToCurrenciesList[0]);
             setToCurrency(availableToCurrenciesList[0]);
           }
+        } else {
+          console.warn('No TO currencies available after processing');
         }
       } else {
+        console.error('Invalid API response format - no pairs array:', data);
         throw new Error('Invalid API response format');
       }
     } catch (apiError) {
@@ -337,15 +371,30 @@ function SwapPageContent() {
     disconnect();
   };
 
-  const handleSelectFromCurrency = (currency: Currency) => {
-    setFromCurrency(currency);
+  const handleSelectFromCurrency = async (currency: Currency) => {
+    console.log('Selected FROM currency:', currency);
+    
+    // First close the modal
     setFromModalOpen(false);
     
-    // Reset toCurrency
+    // Reset TO currency selection
     setToCurrency(null);
     
-    // Fetch available TO currencies based on the new FROM currency
-    fetchToCurrencies(currency);
+    // Set the new FROM currency
+    setFromCurrency(currency);
+    
+    // Set loading state while fetching TO currencies
+    setIsLoading(true);
+    
+    try {
+      // Fetch available TO currencies based on the new FROM currency
+      await fetchToCurrencies(currency);
+    } catch (error) {
+      console.error('Error fetching TO currencies after FROM currency selection:', error);
+      setError('Failed to load available TO currencies. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
   }
   
   const handleSelectToCurrency = (currency: Currency) => {
@@ -1342,6 +1391,16 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
   
+  // Add debug information for currency selection
+  useEffect(() => {
+    console.log(`${title} Modal - Currencies available:`, currencies?.length || 0);
+    if (currencies && currencies.length > 0) {
+      console.log('First few currencies:', currencies.slice(0, 3));
+    } else {
+      console.warn(`No currencies available for ${title}`);
+    }
+  }, [currencies, title]);
+  
   // Focus search input when modal opens
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
@@ -1376,6 +1435,43 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
   };
   
   if (!isOpen) return null;
+  
+  // Safeguard against empty currencies array
+  if (!currencies || currencies.length === 0) {
+    return (
+      <div 
+        className="fixed inset-0 bg-black/80 z-50 flex items-start justify-center p-4 pt-32 overflow-y-auto"
+        onClick={onClose}
+      >
+        <div 
+          ref={modalContentRef}
+          className="bg-slate-800 rounded-xl max-w-md w-full max-h-[80vh] shadow-xl overflow-hidden"
+        >
+          <div className="p-4 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
+            <h3 className="text-lg font-semibold text-slate-200">{title}</h3>
+            <button 
+              className="text-slate-400 hover:text-slate-200 cursor-pointer" 
+              onClick={onClose}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div className="p-8 text-center">
+            <div className="text-slate-300 mb-4">No currencies available</div>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   const filteredCurrencies = currencies.filter(currency => 
     currency.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -1424,51 +1520,51 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <div className="max-h-[50vh] overflow-y-auto pb-2">
-            {Object.entries(groupedCurrencies).map(([symbol, currenciesForSymbol]) => (
-              <div key={symbol} className="mb-4">
-                <div className="flex items-center px-1 mb-2">
-                  <div className="text-sm text-purple-400 font-medium">{symbol}</div>
-                  <div className="ml-2 text-xs text-slate-500">({currenciesForSymbol.length} {currenciesForSymbol.length === 1 ? 'network' : 'networks'})</div>
-                  <div className="ml-auto flex-grow border-t border-slate-700 mx-3"></div>
-                </div>
-                {currenciesForSymbol.map((currency) => (
-                  <button
-                    key={currency.id}
-                    className="w-full text-left p-3 hover:bg-slate-700 rounded-lg mb-2 flex items-center transition duration-150 ease-in-out cursor-pointer"
-                    onClick={() => onSelect(currency)}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center">
-                        {currency.imageUrl ? (
-                          <img 
-                            src={currency.imageUrl} 
-                            alt={currency.symbol}
-                            className="w-6 h-6 mr-3 rounded-full"
-                            onError={(e) => {
-                              // If image fails to load, replace with a fallback
-                              (e.target as HTMLImageElement).src = 'https://placehold.co/24x24/6b21a8/ffffff?text=' + currency.symbol.charAt(0);
-                            }}
-                          />
-                        ) : (
-                          <div className="w-6 h-6 mr-3 rounded-full bg-purple-800 flex items-center justify-center text-white font-medium text-xs">
-                            {currency.symbol.charAt(0)}
+            {Object.keys(groupedCurrencies).length > 0 ? (
+              Object.entries(groupedCurrencies).map(([symbol, currenciesForSymbol]) => (
+                <div key={symbol} className="mb-4">
+                  <div className="flex items-center px-1 mb-2">
+                    <div className="text-sm text-purple-400 font-medium">{symbol}</div>
+                    <div className="ml-2 text-xs text-slate-500">({currenciesForSymbol.length} {currenciesForSymbol.length === 1 ? 'network' : 'networks'})</div>
+                    <div className="ml-auto flex-grow border-t border-slate-700 mx-3"></div>
+                  </div>
+                  {currenciesForSymbol.map((currency) => (
+                    <button
+                      key={currency.id}
+                      className="w-full text-left p-3 hover:bg-slate-700 rounded-lg mb-2 flex items-center transition duration-150 ease-in-out cursor-pointer"
+                      onClick={() => onSelect(currency)}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          {currency.imageUrl ? (
+                            <img 
+                              src={currency.imageUrl} 
+                              alt={currency.symbol}
+                              className="w-6 h-6 mr-3 rounded-full"
+                              onError={(e) => {
+                                // If image fails to load, replace with a fallback
+                                (e.target as HTMLImageElement).src = 'https://placehold.co/24x24/6b21a8/ffffff?text=' + currency.symbol.charAt(0);
+                              }}
+                            />
+                          ) : (
+                            <div className="w-6 h-6 mr-3 rounded-full bg-purple-800 flex items-center justify-center text-white font-medium text-xs">
+                              {currency.symbol.charAt(0)}
+                            </div>
+                          )}
+                          <div>
+                            <div className="text-slate-200 font-medium">{currency.name}</div>
+                            <div className="text-slate-400 text-sm">{currency.symbol}</div>
                           </div>
-                        )}
-                        <div>
-                          <div className="text-slate-200 font-medium">{currency.name}</div>
-                          <div className="text-slate-400 text-sm">{currency.symbol}</div>
+                        </div>
+                        <div className="bg-slate-900 px-2 py-1 rounded-full text-xs text-slate-300">
+                          {currency.network}
                         </div>
                       </div>
-                      <div className="bg-slate-900 px-2 py-1 rounded-full text-xs text-slate-300">
-                        {currency.network}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            ))}
-            
-            {filteredCurrencies.length === 0 && (
+                    </button>
+                  ))}
+                </div>
+              ))
+            ) : (
               <div className="text-center text-slate-400 py-6">
                 No currencies found matching "{searchQuery}"
               </div>
