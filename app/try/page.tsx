@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { Currency, SwapWidgetProps, CurrencySelectorProps, ApiCurrencyPair, ApiPairsResponse, SwapQuoteRequest, SwapQuoteResponse, CurrencyInfo } from './interfaces'
 import { ConnectionProvider, WalletProvider, useWallet, useConnection } from '@solana/wallet-adapter-react'
@@ -1389,7 +1389,10 @@ function SwapWidget({
 // CurrencySelector Modal Component
 function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: CurrencySelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Currency[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Add debug information for currency selection
   useEffect(() => {
@@ -1400,6 +1403,94 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
       console.warn(`No currencies available for ${title}`);
     }
   }, [currencies, title]);
+  
+  // Debounced search function
+  const handleSearch = useCallback(async (query: string) => {
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Update the search query state immediately
+    setSearchQuery(query);
+    
+    // If the query is empty, clear results and return
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    
+    // Set a timeout to execute the search after a short delay
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        setIsSearching(true);
+        
+        // Call the search API
+        const response = await fetch('/api/currency-search', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            search: query
+          }),
+        });
+        
+        if (!response.ok) {
+          console.error('Search API request failed:', response.status);
+          return;
+        }
+        
+        const data = await response.json();
+        
+        // Transform API response to Currency objects
+        if (Array.isArray(data)) {
+          const transformedResults = data
+            .filter(item => item.isEnabled)
+            .map(item => {
+              // Determine network based on currency code
+              let defaultNetwork = 'ethereum';
+              const code = item.code.toLowerCase();
+              if (code === 'sol') defaultNetwork = 'sol';
+              else if (code === 'btc') defaultNetwork = 'bitcoin';
+              else if (code === 'eth') defaultNetwork = 'ethereum';
+              else if (code === 'matic') defaultNetwork = 'polygon';
+              else if (code === 'avax') defaultNetwork = 'avalanche';
+              
+              // Get image URL
+              let imageUrl = item.imageUrl || '';
+              if (!imageUrl) {
+                // Use fallback image URLs
+                if (code === 'sol') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/sol.png';
+                else if (code === 'btc') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/btc.png'; 
+                else if (code === 'eth') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/eth.png';
+                else if (code === 'usdt') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/usdt.png';
+                else if (code === 'usdc') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/usdc.png';
+                else {
+                  imageUrl = `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/${code}.png`;
+                }
+              }
+              
+              return {
+                id: `${item.code}-${defaultNetwork}`,
+                name: item.name,
+                symbol: item.code.toUpperCase(),
+                network: defaultNetwork,
+                imageUrl
+              };
+            });
+          
+          setSearchResults(transformedResults);
+          console.log(`Found ${transformedResults.length} currencies matching "${query}"`);
+        }
+      } catch (error) {
+        console.error('Error searching currencies:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300); // 300ms debounce delay
+    
+  }, []);
   
   // Focus search input when modal opens
   useEffect(() => {
@@ -1422,6 +1513,10 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
     return () => {
       window.removeEventListener('keydown', handleEscapeKey);
       setSearchQuery('');
+      setSearchResults([]);
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
     };
   }, [isOpen, onClose]);
   
@@ -1436,8 +1531,13 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
   
   if (!isOpen) return null;
   
-  // Safeguard against empty currencies array
-  if (!currencies || currencies.length === 0) {
+  // Determine which currencies to display
+  const displayCurrencies = searchQuery.trim() 
+    ? searchResults
+    : currencies || [];
+  
+  // Safeguard against empty currencies array when not searching
+  if (displayCurrencies.length === 0 && !searchQuery.trim() && !isSearching) {
     return (
       <div 
         className="fixed inset-0 bg-black/80 z-50 flex items-start justify-center p-4 pt-32 overflow-y-auto"
@@ -1473,14 +1573,8 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
     );
   }
   
-  const filteredCurrencies = currencies.filter(currency => 
-    currency.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    currency.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    currency.network.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
   // Group currencies by symbol for better organization
-  const groupedCurrencies = filteredCurrencies.reduce((acc, currency) => {
+  const groupedCurrencies = displayCurrencies.reduce((acc, currency) => {
     const key = currency.symbol;
     if (!acc[key]) {
       acc[key] = [];
@@ -1517,10 +1611,17 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
             placeholder="Search by name, symbol or network"
             className="w-full bg-slate-900 rounded-lg border border-slate-700 px-4 py-2 mb-4 text-slate-200 focus:outline-none focus:border-purple-500"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
           />
           <div className="max-h-[50vh] overflow-y-auto pb-2">
-            {Object.keys(groupedCurrencies).length > 0 ? (
+            {isSearching && (
+              <div className="flex justify-center items-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
+                <span className="ml-2 text-slate-300">Searching...</span>
+              </div>
+            )}
+            
+            {!isSearching && Object.keys(groupedCurrencies).length > 0 ? (
               Object.entries(groupedCurrencies).map(([symbol, currenciesForSymbol]) => (
                 <div key={symbol} className="mb-4">
                   <div className="flex items-center px-1 mb-2">
@@ -1565,9 +1666,11 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
                 </div>
               ))
             ) : (
-              <div className="text-center text-slate-400 py-6">
-                No currencies found matching "{searchQuery}"
-              </div>
+              !isSearching && searchQuery.trim() && (
+                <div className="text-center text-slate-400 py-6">
+                  No currencies found matching "{searchQuery}"
+                </div>
+              )
             )}
           </div>
         </div>
