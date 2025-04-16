@@ -6,7 +6,7 @@ export async function GET() {
     
     // Make the API call to the external service to get all available currencies
     // According to the API spec, we need to provide currencies and search parameters
-    const response = await fetch('https://ionut.moonpay.com/v1/currencies/currencies_info', {
+    const response = await fetch('https://api.swaps.xyz/v1/currencies/currencies_info', {
       method: 'POST', // Despite being a GET request on our end, the external API expects POST
       headers: {
         'Content-Type': 'application/json',

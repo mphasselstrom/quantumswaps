@@ -10,7 +10,7 @@ export default function Footer() {
           <div className="mb-4 flex justify-center">
             <Logo />
           </div>
-          <div className="text-sm text-slate-300">© quantumswaps.xyz - All rights reserved.</div>
+          <div className="text-sm text-slate-300">© swaps.xyz - All rights reserved.</div>
           
           {/* Social links removed */}
         </div>

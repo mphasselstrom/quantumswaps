@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     console.log('Sending execute request with body:', body);
 
     // Make the API call to the external service
-    const response = await fetch('https://ionut.moonpay.com/v1/swap/execute', {
+    const response = await fetch('https://api.swaps.xyz/v1/swap/execute', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

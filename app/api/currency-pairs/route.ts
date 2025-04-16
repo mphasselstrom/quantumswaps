@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
     // Make the API call to the external service
     try {
-      const response = await fetch('https://ionut.moonpay.com/v1/currencies/pairs', {
+      const response = await fetch('https://api.swaps.xyz/v1/currencies/pairs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

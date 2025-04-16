@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     console.log('Currency search API called with query:', searchQuery);
     
     // Make the API call to the external service to search for currencies
-    const response = await fetch('https://ionut.moonpay.com/v1/currencies/currencies_info', {
+    const response = await fetch('https://api.swaps.xyz/v1/currencies/currencies_info', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

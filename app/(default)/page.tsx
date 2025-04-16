@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Quantum API - Low-cost, Instant Cross Chain Swaps',
+  title: 'Swaps.xyz API - Low-cost, Instant Cross Chain Swaps',
   description: 'The most comprehensive swap API for Solana liquidity and seamless cross-chain transactions.',
 }
 
