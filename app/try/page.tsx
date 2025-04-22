@@ -683,7 +683,7 @@ function SwapWidget({
   const [toAmount, setToAmount] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [minAmount, setMinAmount] = useState<string>('0.04')
+  const [recommendedAmount, setRecommendedAmount] = useState<string>('0.1')
   const [transactionInProgress, setTransactionInProgress] = useState(false)
   const [transactionId, setTransactionId] = useState<string | null>(null)
   const [transactionStatus, setTransactionStatus] = useState<string | null>(null)
@@ -704,39 +704,66 @@ function SwapWidget({
     }
   }, [isConnected, userAccount]);
   
-  // Get minimum exchange amount (dummy implementation)
-  async function getMinExchangeAmount() {
-    try {
-      setError(null);
-      
-      if (!fromCurrency || !toCurrency) {
-        return;
+  // Get recommended amount based on currency (~$100 equivalent)
+  async function getRecommendedAmount() {
+    if (!fromCurrency) {
+      return;
+    }
+    
+    // Default values for common currencies (approximately $100 worth)
+    let recommendedValue = '0.1'; // Default value
+    
+    if (fromCurrency.symbol === 'BTC') {
+      recommendedValue = '0.0025'; // ~$100 in BTC
+    } else if (fromCurrency.symbol === 'ETH') {
+      recommendedValue = '0.04'; // ~$100 in ETH
+    } else if (fromCurrency.symbol === 'SOL') {
+      recommendedValue = '1'; // ~$100 in SOL
+    } else if (fromCurrency.symbol === 'USDT' || fromCurrency.symbol === 'USDC' || fromCurrency.symbol === 'DAI') {
+      recommendedValue = '100'; // Stable coins
+    } else if (fromCurrency.symbol === 'AVAX') {
+      recommendedValue = '3'; // ~$100 in AVAX
+    } else if (fromCurrency.symbol === 'MATIC') {
+      recommendedValue = '100'; // ~$100 in MATIC
+    } else if (fromCurrency.symbol === 'BNB') {
+      recommendedValue = '0.25'; // ~$100 in BNB
+    } else {
+      // Try to get the price from CoinGecko for other tokens
+      try {
+        const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${fromCurrency.symbol.toLowerCase()}&vs_currencies=usd`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          const tokenId = fromCurrency.symbol.toLowerCase();
+          
+          if (data[tokenId] && data[tokenId].usd) {
+            const tokenPriceInUsd = data[tokenId].usd;
+            // Calculate amount for ~$100 worth
+            recommendedValue = (100 / tokenPriceInUsd).toFixed(6);
+          }
+        }
+      } catch (priceError) {
+        // Silently fail and use default value
       }
-      
-      // Set a fixed min amount for demo purposes
-      const minAmountValue = '0.04';
-      setMinAmount(minAmountValue);
-      
-      // Set a default value if the input is empty
-      if (!fromAmount || parseFloat(fromAmount) === 0) {
-        setFromAmount(minAmountValue);
-        fetchQuote(minAmountValue);
-      }
-      
-    } catch (err) {
-      console.error('Error getting min amount:', err);
-      setError('Failed to get minimum amount. Please try again.');
+    }
+    
+    setRecommendedAmount(recommendedValue);
+    
+    // Set a default value if the input is empty
+    if (!fromAmount || parseFloat(fromAmount) === 0) {
+      setFromAmount(recommendedValue);
+      fetchQuote(recommendedValue);
     }
   }
   
-  // Update min amount when currencies change
+  // Update recommended amount when currencies change
   useEffect(() => {
-    if (fromCurrency && toCurrency) {
-      getMinExchangeAmount();
+    if (fromCurrency) {
+      getRecommendedAmount();
     }
-  }, [fromCurrency, toCurrency]);
+  }, [fromCurrency]);
   
-  // Fetch quote from the API
+  // Update the fetchQuote function to remove references to recommended amounts
   const fetchQuote = async (amount: string) => {
     if (!fromCurrency || !toCurrency || !amount || parseFloat(amount) <= 0) {
       setToAmount('');
@@ -890,7 +917,7 @@ function SwapWidget({
   const initiateSwap = async () => {
     console.log('initiateSwap - start', { isLoading });
     try {
-      // All the validation checks remain the same
+      // Validate required fields
       if (!fromCurrency || !toCurrency) {
         setError('Please select currencies');
         return;
@@ -898,11 +925,6 @@ function SwapWidget({
       
       if (!fromAmount || parseFloat(fromAmount) === 0) {
         setError('Please enter an amount');
-        return;
-      }
-      
-      if (parseFloat(fromAmount) < parseFloat(minAmount)) {
-        setError(`Minimum amount is ${minAmount} ${fromCurrency.symbol}`);
         return;
       }
       
@@ -1248,9 +1270,7 @@ function SwapWidget({
           <div>
             <div className="flex justify-between mb-2">
               <label className="text-sm text-slate-400 font-medium">From</label>
-              {minAmount && fromCurrency && (
-                <span className="text-sm text-slate-500">Min: {minAmount} {fromCurrency.symbol}</span>
-              )}
+              {/* Removed recommended amount text */}
             </div>
             <div className="bg-slate-900 rounded-lg p-4 border border-slate-700 relative">
               <div className="flex items-center justify-between">
@@ -1277,9 +1297,6 @@ function SwapWidget({
                           </div>
                         )}
                         <span className="text-slate-300">{fromCurrency.symbol}</span>
-                        <span className="text-slate-500 text-xs ml-1">
-                          ({fromCurrency.networkName || fromCurrency.network})
-                        </span>
                       </>
                     ) : (
                       <span className="mr-1 text-slate-300">Select</span>
