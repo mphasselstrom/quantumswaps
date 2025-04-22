@@ -93,65 +93,111 @@ function SwapPageContent() {
             sample: currenciesData.slice(0, 3)
           });
           
+          // Instead of throwing an error, check if we have currencies
+          if (!currenciesData || currenciesData.length === 0) {
+            console.warn('No currencies returned from API, using fallback');
+            // Fallback will be handled by the API itself now, so this scenario shouldn't happen
+            // But we'll keep this check for robustness
+          }
+          
           // Transform API response to our Currency interface
           const fromCurrenciesMap = new Map<string, Currency>();
           
-          // Process each currency - this API doesn't provide networks info
-          // so we'll create a single entry for each currency
-          currenciesData.forEach(currencyInfo => {
-            if (currencyInfo.isEnabled) {
-              // For now, assume a default network based on the currency code
-              // In a real app, you'd likely get this from another API or have it configured
-              let defaultNetwork = 'ethereum';
-              
-              // Special cases for common cryptocurrencies
-              const code = currencyInfo.code.toLowerCase();
-              if (code === 'sol') defaultNetwork = 'sol';
-              else if (code === 'btc') defaultNetwork = 'bitcoin';
-              else if (code === 'eth') defaultNetwork = 'ethereum';
-              else if (code === 'matic') defaultNetwork = 'polygon';
-              else if (code === 'avax') defaultNetwork = 'avalanche';
-              
-              // Ensure we have an imageUrl - use fallback if needed
-              let imageUrl = currencyInfo.imageUrl || '';
-              
-              // Set fallback image URLs for common cryptocurrencies
-              if (!imageUrl) {
-                // Use the cryptocurrency-icons library for reliable icons
-                if (code === 'sol') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/sol.png';
-                else if (code === 'btc') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/btc.png'; 
-                else if (code === 'eth') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/eth.png';
-                else if (code === 'usdt') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/usdt.png';
-                else if (code === 'usdc') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/usdc.png';
-                else if (code === 'bnb') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/bnb.png';
-                else if (code === 'xrp') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/xrp.png';
-                else if (code === 'ada') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/ada.png';
-                else if (code === 'avax') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/avax.png';
-                else if (code === 'doge') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/doge.png';
-                else if (code === 'dot') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/dot.png';
-                else if (code === 'matic') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/matic.png';
-                else if (code === 'link') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/link.png';
-                else {
-                  // Try to form a generic URL for other tokens
-                  imageUrl = `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/${code}.png`;
+          // Process each currency - ensure we have at least some data
+          if (currenciesData && currenciesData.length > 0) {
+            currenciesData.forEach(currencyInfo => {
+              if (currencyInfo.isEnabled) {
+                // For cryptocurrencies, support multiple networks based on the currency code
+                let networks: string[] = [];
+                
+                // Get the currency code (safely handle undefined codes)
+                const code = currencyInfo.code?.toLowerCase() || '';
+                if (!code) return; // Skip currencies without a code
+                
+                // Define networks based on common cryptocurrency networks
+                // Use correct network identifiers for API calls
+                if (code === 'sol') networks = ['sol'];  
+                else if (code === 'btc') networks = ['btc'];
+                else if (code === 'eth') networks = ['eth'];
+                else if (code === 'matic') networks = ['matic'];
+                else if (code === 'avax') networks = ['avax'];
+                else if (code === 'bnb') networks = ['bsc'];
+                else if (code === 'usdt' || code === 'usdc') {
+                  // Stablecoins exist on multiple chains
+                  networks = ['eth', 'sol', 'matic', 'bsc', 'avax'];
+                } else {
+                  // Default to Ethereum for other tokens
+                  networks = ['eth'];
                 }
+                
+                // Ensure we have an imageUrl - use fallback if needed
+                let imageUrl = currencyInfo.imageUrl || '';
+                
+                // Set fallback image URLs for common cryptocurrencies
+                if (!imageUrl) {
+                  // Use the cryptocurrency-icons library for reliable icons
+                  if (code === 'sol') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/sol.png';
+                  else if (code === 'btc') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/btc.png'; 
+                  else if (code === 'eth') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/eth.png';
+                  else if (code === 'usdt') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/usdt.png';
+                  else if (code === 'usdc') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/usdc.png';
+                  else if (code === 'bnb') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/bnb.png';
+                  else if (code === 'xrp') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/xrp.png';
+                  else if (code === 'ada') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/ada.png';
+                  else if (code === 'avax') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/avax.png';
+                  else if (code === 'doge') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/doge.png';
+                  else if (code === 'dot') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/dot.png';
+                  else if (code === 'matic') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/matic.png';
+                  else if (code === 'link') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/link.png';
+                  else {
+                    // Try to form a generic URL for other tokens
+                    imageUrl = `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/${code}.png`;
+                  }
+                }
+                
+                // Create a currency object for each network
+                networks.forEach(network => {
+                  const currencyId = `${currencyInfo.code}-${network}`;
+                  fromCurrenciesMap.set(currencyId, {
+                    id: currencyId,
+                    name: currencyInfo.name || code.toUpperCase(),
+                    symbol: currencyInfo.code.toUpperCase(),
+                    network: network,
+                    imageUrl: imageUrl,
+                    extraIdName: currencyInfo.requiresExtraTag ? 'Tag' : undefined,
+                  });
+                });
               }
-              
-              const currencyId = `${currencyInfo.code}-${defaultNetwork}`;
-              fromCurrenciesMap.set(currencyId, {
-                id: currencyId,
-                name: currencyInfo.name,
-                symbol: currencyInfo.code.toUpperCase(),
-                network: defaultNetwork,
-                imageUrl: imageUrl,
-              });
-            }
-          });
+            });
+          }
           
           const availableFromCurrencies = Array.from(fromCurrenciesMap.values());
           
+          // Verify we have at least some currencies after processing
+          if (availableFromCurrencies.length === 0) {
+            console.warn('No valid currencies after processing, falling back to defaults');
+            // The API should have already provided fallback currencies, but just in case:
+            // Here we could add some default currencies as well, but for now we'll display an error
+            setError('No valid currencies available. Please try again later.');
+            setIsLoading(false);
+            return;
+          }
+          
+          // Sort by name and then by symbol for better UX
+          availableFromCurrencies.sort((a, b) => {
+            // First sort by symbol to group related tokens
+            const symbolCompare = a.symbol.localeCompare(b.symbol);
+            if (symbolCompare !== 0) return symbolCompare;
+            
+            // Then by network for tokens with the same symbol
+            return a.network.localeCompare(b.network);
+          });
+          
           // First update the currencies state
           setCurrencies(availableFromCurrencies);
+          
+          // Log the currencies to debug
+          console.log(`Processed ${availableFromCurrencies.length} currencies for FROM dropdown`);
           
           // Find SOL as the default FROM currency if available
           const solCurrency = availableFromCurrencies.find(c => 
@@ -248,7 +294,7 @@ function SwapPageContent() {
       
       const data: ApiPairsResponse = await response.json();
       
-      // Log the raw API response (first 5 items)
+      // Log the raw API response
       console.log('Currency pairs API response:', {
         pairsCount: data.pairs?.length || 0,
         sample: data.pairs?.slice(0, 5) || [],
@@ -272,7 +318,8 @@ function SwapPageContent() {
             // Find if we have any info about this currency in our FROM currencies map
             // to reuse image URL if available
             const existingCurrency = Array.from(currencies).find(c => 
-              c.symbol.toLowerCase() === pair.toCurrency.toLowerCase()
+              c.symbol.toLowerCase() === pair.toCurrency.toLowerCase() && 
+              c.network === pair.toNetwork
             );
             
             // Set default image URLs for common currencies if we don't have one
@@ -301,11 +348,31 @@ function SwapPageContent() {
               }
             }
             
+            // Find currency name or use symbol if not found
+            let currencyName = pair.toCurrency.toUpperCase();
+            const matchingCurrency = Array.from(currencies).find(c => 
+              c.symbol.toLowerCase() === pair.toCurrency.toLowerCase()
+            );
+            if (matchingCurrency) {
+              currencyName = matchingCurrency.name;
+            }
+            
+            // Map standard names for networks when displaying to the user
+            let displayNetwork = pair.toNetwork;
+            // Map network codes to more readable names for display
+            if (pair.toNetwork === 'eth') displayNetwork = 'Ethereum';
+            else if (pair.toNetwork === 'btc') displayNetwork = 'Bitcoin';
+            else if (pair.toNetwork === 'matic') displayNetwork = 'Polygon';
+            else if (pair.toNetwork === 'avax') displayNetwork = 'Avalanche';
+            else if (pair.toNetwork === 'bsc') displayNetwork = 'BSC';
+            else if (pair.toNetwork === 'sol') displayNetwork = 'Solana';
+            
             toCurrenciesMap.set(currencyId, {
               id: currencyId,
-              name: pair.toCurrency.toUpperCase(),
+              name: currencyName,
               symbol: pair.toCurrency.toUpperCase(),
-              network: pair.toNetwork,
+              network: pair.toNetwork, // Store original network code for API requests 
+              networkName: displayNetwork, // Add a display name for the UI
               imageUrl: imageUrl,
             });
           }
@@ -313,11 +380,47 @@ function SwapPageContent() {
         
         const availableToCurrenciesList = Array.from(toCurrenciesMap.values());
         
-        // Log the processed TO currencies (first 5 items)
+        // Sort by name for consistent display
+        availableToCurrenciesList.sort((a, b) => a.name.localeCompare(b.name));
+        
+        // Log the processed TO currencies
         console.log('Processed TO currencies:', {
           count: availableToCurrenciesList.length,
           sample: availableToCurrenciesList.slice(0, 5)
         });
+        
+        // Add fallback TO currencies if none were returned (helps with debugging)
+        if (availableToCurrenciesList.length === 0) {
+          console.warn('No TO currencies returned from API, adding fallbacks for debugging');
+          // Add at least ETH and USDT as fallbacks for testing
+          if (selectedFromCurrency.symbol.toLowerCase() === 'sol') {
+            availableToCurrenciesList.push({
+              id: 'eth-eth',
+              name: 'Ethereum',
+              symbol: 'ETH',
+              network: 'eth',
+              networkName: 'Ethereum',
+              imageUrl: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/eth.png',
+            });
+            availableToCurrenciesList.push({
+              id: 'usdt-eth',
+              name: 'Tether',
+              symbol: 'USDT',
+              network: 'eth',
+              networkName: 'Ethereum',
+              imageUrl: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/usdt.png',
+            });
+          } else {
+            availableToCurrenciesList.push({
+              id: 'sol-sol',
+              name: 'Solana',
+              symbol: 'SOL',
+              network: 'sol',
+              networkName: 'Solana',
+              imageUrl: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/sol.png',
+            });
+          }
+        }
         
         // Log before setting state
         console.log('Setting availableToCurrencies:', availableToCurrenciesList.length);
@@ -449,10 +552,8 @@ function SwapPageContent() {
         <div className="pt-32 pb-12 md:pt-40 md:pb-20">
           <div className="max-w-3xl mx-auto text-center pb-12">
             <div className="inline-flex items-center justify-center p-1 mb-4 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-              <span className="bg-slate-900 rounded-full px-3 py-1 text-xs font-semibold text-slate-200">BETA</span>
+              <span className="bg-slate-900 rounded-full px-3 py-1 text-xs font-semibold text-slate-200">Swaps.xyz</span>
             </div>
-            <h1 className="h1 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 pb-4 font-bold">Try Quantum</h1>
-            <p className="text-lg text-slate-400">Swap between any chain at lightning speed and low cost</p>
           </div>
 
           {/* Wallet Connection Button */}
@@ -521,7 +622,7 @@ function SwapPageContent() {
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-semibold text-slate-200">Swap</h2>
                   <div className="text-xs text-slate-400 px-2 py-1 bg-slate-700 rounded-full">
-                    Powered by Quantum
+                    Powered by Swaps.xyz
                   </div>
                 </div>
 
@@ -1176,6 +1277,9 @@ function SwapWidget({
                           </div>
                         )}
                         <span className="text-slate-300">{fromCurrency.symbol}</span>
+                        <span className="text-slate-500 text-xs ml-1">
+                          ({fromCurrency.networkName || fromCurrency.network})
+                        </span>
                       </>
                     ) : (
                       <span className="mr-1 text-slate-300">Select</span>
@@ -1247,6 +1351,9 @@ function SwapWidget({
                           </div>
                         )}
                         <span className="text-slate-300">{toCurrency.symbol}</span>
+                        <span className="text-slate-500 text-xs ml-1">
+                          ({toCurrency.networkName || toCurrency.network})
+                        </span>
                       </>
                     ) : (
                       <span className="mr-1 text-slate-300">Select</span>
@@ -1393,6 +1500,11 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
   const [isSearching, setIsSearching] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [visibleRangeStart, setVisibleRangeStart] = useState(0);
+  
+  // Number of items to render at once (adjust based on performance)
+  const ITEMS_TO_RENDER = 50;
   
   // Add debug information for currency selection
   useEffect(() => {
@@ -1404,8 +1516,28 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
     }
   }, [currencies, title]);
   
+  // Local search function - much faster than API calls
+  const performLocalSearch = useCallback((query: string) => {
+    if (!query.trim() || !currencies || currencies.length === 0) {
+      return [];
+    }
+    
+    const searchTerms = query.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+    
+    return currencies.filter(currency => {
+      const name = currency.name.toLowerCase();
+      const symbol = currency.symbol.toLowerCase();
+      const network = currency.network.toLowerCase();
+      
+      // Check if all search terms are found in any of the fields
+      return searchTerms.every(term => 
+        name.includes(term) || symbol.includes(term) || network.includes(term)
+      );
+    });
+  }, [currencies]);
+  
   // Debounced search function
-  const handleSearch = useCallback(async (query: string) => {
+  const handleSearch = useCallback((query: string) => {
     // Clear any existing timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
@@ -1414,6 +1546,9 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
     // Update the search query state immediately
     setSearchQuery(query);
     
+    // Reset the visible range when search query changes
+    setVisibleRangeStart(0);
+    
     // If the query is empty, clear results and return
     if (!query.trim()) {
       setSearchResults([]);
@@ -1421,76 +1556,59 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
     }
     
     // Set a timeout to execute the search after a short delay
-    searchTimeoutRef.current = setTimeout(async () => {
+    searchTimeoutRef.current = setTimeout(() => {
+      setIsSearching(true);
+      
       try {
-        setIsSearching(true);
-        
-        // Call the search API
-        const response = await fetch('/api/currency-search', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            search: query
-          }),
-        });
-        
-        if (!response.ok) {
-          console.error('Search API request failed:', response.status);
-          return;
-        }
-        
-        const data = await response.json();
-        
-        // Transform API response to Currency objects
-        if (Array.isArray(data)) {
-          const transformedResults = data
-            .filter(item => item.isEnabled)
-            .map(item => {
-              // Determine network based on currency code
-              let defaultNetwork = 'ethereum';
-              const code = item.code.toLowerCase();
-              if (code === 'sol') defaultNetwork = 'sol';
-              else if (code === 'btc') defaultNetwork = 'bitcoin';
-              else if (code === 'eth') defaultNetwork = 'ethereum';
-              else if (code === 'matic') defaultNetwork = 'polygon';
-              else if (code === 'avax') defaultNetwork = 'avalanche';
-              
-              // Get image URL
-              let imageUrl = item.imageUrl || '';
-              if (!imageUrl) {
-                // Use fallback image URLs
-                if (code === 'sol') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/sol.png';
-                else if (code === 'btc') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/btc.png'; 
-                else if (code === 'eth') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/eth.png';
-                else if (code === 'usdt') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/usdt.png';
-                else if (code === 'usdc') imageUrl = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/usdc.png';
-                else {
-                  imageUrl = `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/${code}.png`;
-                }
-              }
-              
-              return {
-                id: `${item.code}-${defaultNetwork}`,
-                name: item.name,
-                symbol: item.code.toUpperCase(),
-                network: defaultNetwork,
-                imageUrl
-              };
-            });
-          
-          setSearchResults(transformedResults);
-          console.log(`Found ${transformedResults.length} currencies matching "${query}"`);
-        }
+        // Perform local search
+        const results = performLocalSearch(query);
+        setSearchResults(results);
+        console.log(`Found ${results.length} currencies matching "${query}"`);
       } catch (error) {
         console.error('Error searching currencies:', error);
       } finally {
         setIsSearching(false);
       }
-    }, 300); // 300ms debounce delay
+    }, 150);
     
-  }, []);
+  }, [performLocalSearch]);
+  
+  // Handle scrolling to load more items
+  const handleScroll = useCallback(() => {
+    if (!listRef.current) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = listRef.current;
+    const bottomThreshold = 200; // pixels from bottom to trigger loading more
+    
+    // Get the current display currencies length safely
+    const currentDisplayLength = searchQuery.trim() 
+      ? searchResults.length 
+      : (currencies?.length || 0);
+    
+    // If we're near the bottom, show more items
+    if (scrollHeight - scrollTop - clientHeight < bottomThreshold) {
+      setVisibleRangeStart(prev => Math.min(prev + 20, Math.max(0, currentDisplayLength - ITEMS_TO_RENDER)));
+    }
+    
+    // If we're near the top and not at the beginning, show previous items
+    if (scrollTop < bottomThreshold && visibleRangeStart > 0) {
+      setVisibleRangeStart(prev => Math.max(0, prev - 20));
+    }
+  }, [listRef, visibleRangeStart, ITEMS_TO_RENDER, searchQuery, searchResults, currencies]);
+  
+  // Add scroll event listener
+  useEffect(() => {
+    const listElement = listRef.current;
+    if (listElement) {
+      listElement.addEventListener('scroll', handleScroll);
+    }
+    
+    return () => {
+      if (listElement) {
+        listElement.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [handleScroll]);
   
   // Focus search input when modal opens
   useEffect(() => {
@@ -1499,6 +1617,9 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
         searchInputRef.current?.focus();
       }, 100);
     }
+    
+    // Reset visible range when modal opens
+    setVisibleRangeStart(0);
     
     // Add event listener for Escape key
     const handleEscapeKey = (e: KeyboardEvent) => {
@@ -1531,10 +1652,31 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
   
   if (!isOpen) return null;
   
-  // Determine which currencies to display
+  // Determine which currencies to display based on search query
   const displayCurrencies = searchQuery.trim() 
     ? searchResults
     : currencies || [];
+  
+  // Sort alphabetically by name and then by network
+  const sortedCurrencies = [...displayCurrencies].sort((a, b) => {
+    // First sort by symbol
+    const symbolCompare = a.symbol.localeCompare(b.symbol);
+    if (symbolCompare !== 0) return symbolCompare;
+    
+    // Then by network for currencies with the same symbol
+    return (a.networkName || a.network).localeCompare(b.networkName || b.network);
+  });
+  
+  // Get the visible slice of currencies
+  const visibleCurrencies = sortedCurrencies.slice(
+    visibleRangeStart, 
+    visibleRangeStart + ITEMS_TO_RENDER
+  );
+  
+  // Calculate spacer heights for virtual scrolling
+  const itemHeight = 64; // approximate height of each currency item in px
+  const topSpacerHeight = visibleRangeStart * itemHeight;
+  const bottomSpacerHeight = Math.max(0, (sortedCurrencies.length - visibleRangeStart - ITEMS_TO_RENDER) * itemHeight);
   
   // Safeguard against empty currencies array when not searching
   if (displayCurrencies.length === 0 && !searchQuery.trim() && !isSearching) {
@@ -1573,16 +1715,6 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
     );
   }
   
-  // Group currencies by symbol for better organization
-  const groupedCurrencies = displayCurrencies.reduce((acc, currency) => {
-    const key = currency.symbol;
-    if (!acc[key]) {
-      acc[key] = [];
-    }
-    acc[key].push(currency);
-    return acc;
-  }, {} as Record<string, Currency[]>);
-  
   return (
     <div 
       className="fixed inset-0 bg-black/80 z-50 flex items-start justify-center p-4 pt-32 overflow-y-auto"
@@ -1613,7 +1745,19 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
           />
-          <div className="max-h-[50vh] overflow-y-auto pb-2">
+          
+          {/* Currency Count */}
+          <div className="text-sm text-slate-400 mb-2">
+            {searchQuery ? 
+              `Found ${displayCurrencies.length} currencies` : 
+              `${displayCurrencies.length} currencies available`
+            }
+          </div>
+          
+          <div 
+            ref={listRef}
+            className="max-h-[50vh] overflow-y-auto pb-2 pr-1 currency-scroll relative"
+          >
             {isSearching && (
               <div className="flex justify-center items-center py-4">
                 <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
@@ -1621,50 +1765,54 @@ function CurrencySelector({ isOpen, onClose, currencies, onSelect, title }: Curr
               </div>
             )}
             
-            {!isSearching && Object.keys(groupedCurrencies).length > 0 ? (
-              Object.entries(groupedCurrencies).map(([symbol, currenciesForSymbol]) => (
-                <div key={symbol} className="mb-4">
-                  <div className="flex items-center px-1 mb-2">
-                    <div className="text-sm text-purple-400 font-medium">{symbol}</div>
-                    <div className="ml-2 text-xs text-slate-500">({currenciesForSymbol.length} {currenciesForSymbol.length === 1 ? 'network' : 'networks'})</div>
-                    <div className="ml-auto flex-grow border-t border-slate-700 mx-3"></div>
-                  </div>
-                  {currenciesForSymbol.map((currency) => (
-                    <button
-                      key={currency.id}
-                      className="w-full text-left p-3 hover:bg-slate-700 rounded-lg mb-2 flex items-center transition duration-150 ease-in-out cursor-pointer"
-                      onClick={() => onSelect(currency)}
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex items-center">
-                          {currency.imageUrl ? (
-                            <img 
-                              src={currency.imageUrl} 
-                              alt={currency.symbol}
-                              className="w-6 h-6 mr-3 rounded-full"
-                              onError={(e) => {
-                                // If image fails to load, replace with a fallback
-                                (e.target as HTMLImageElement).src = 'https://placehold.co/24x24/6b21a8/ffffff?text=' + currency.symbol.charAt(0);
-                              }}
-                            />
-                          ) : (
-                            <div className="w-6 h-6 mr-3 rounded-full bg-purple-800 flex items-center justify-center text-white font-medium text-xs">
-                              {currency.symbol.charAt(0)}
-                            </div>
-                          )}
-                          <div>
-                            <div className="text-slate-200 font-medium">{currency.name}</div>
-                            <div className="text-slate-400 text-sm">{currency.symbol}</div>
+            {!isSearching && sortedCurrencies.length > 0 ? (
+              <div className="space-y-2 relative">
+                {/* Top spacer for virtual scrolling */}
+                {topSpacerHeight > 0 && (
+                  <div style={{ height: `${topSpacerHeight}px` }} />
+                )}
+                
+                {/* Visible currencies */}
+                {visibleCurrencies.map((currency) => (
+                  <button
+                    key={currency.id}
+                    className="w-full text-left p-3 hover:bg-slate-700 rounded-lg flex items-center transition duration-150 ease-in-out cursor-pointer"
+                    onClick={() => onSelect(currency)}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        {currency.imageUrl ? (
+                          <img 
+                            src={currency.imageUrl} 
+                            alt={currency.symbol}
+                            className="w-6 h-6 mr-3 rounded-full"
+                            onError={(e) => {
+                              // If image fails to load, replace with a fallback
+                              (e.target as HTMLImageElement).src = 'https://placehold.co/24x24/6b21a8/ffffff?text=' + currency.symbol.charAt(0);
+                            }}
+                          />
+                        ) : (
+                          <div className="w-6 h-6 mr-3 rounded-full bg-purple-800 flex items-center justify-center text-white font-medium text-xs">
+                            {currency.symbol.charAt(0)}
                           </div>
-                        </div>
-                        <div className="bg-slate-900 px-2 py-1 rounded-full text-xs text-slate-300">
-                          {currency.network}
+                        )}
+                        <div>
+                          <div className="text-slate-200 font-medium">{currency.name}</div>
+                          <div className="text-slate-400 text-sm">{currency.symbol}</div>
                         </div>
                       </div>
-                    </button>
-                  ))}
-                </div>
-              ))
+                      <div className="bg-slate-900 px-2 py-1 rounded-full text-xs text-slate-300">
+                        {currency.networkName || currency.network}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+                
+                {/* Bottom spacer for virtual scrolling */}
+                {bottomSpacerHeight > 0 && (
+                  <div style={{ height: `${bottomSpacerHeight}px` }} />
+                )}
+              </div>
             ) : (
               !isSearching && searchQuery.trim() && (
                 <div className="text-center text-slate-400 py-6">

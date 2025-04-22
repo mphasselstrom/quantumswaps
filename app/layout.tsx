@@ -9,8 +9,8 @@ const inter = Inter({
 })
 
 export const metadata = {
-  title: 'Quantum - Lightning Fast Cross-Chain Swaps',
-  description: 'QuantumSwap offers low-cost and instant cross-chain swaps with a powerful API for seamless integration.',
+  title: 'Swaps.xyz - Lightning Fast Cross-Chain Swaps',
+  description: 'Swaps.xyz offers low-cost and instant cross-chain swaps with a powerful API for seamless integration.',
 }
 
 export default function RootLayout({

@@ -34,6 +34,9 @@ export async function POST(request: Request) {
     // Log if we're looking for SOL pairs
     const isSearchingForSol = body.fromCurrencies.some((currency: string) => currency.toLowerCase() === 'sol');
     console.log('Searching for SOL pairs:', isSearchingForSol);
+    
+    // Add additional debugging info
+    console.log('Request body for pairs API:', JSON.stringify(requestBody));
 
     // Make the API call to the external service
     try {
@@ -60,26 +63,8 @@ export async function POST(request: Request) {
           console.error('Error response text:', errorDetails);
         }
 
-        // If we're searching for SOL pairs, provide fallback pairs
-        if (isSearchingForSol) {
-          console.log('Providing fallback SOL pairs');
-          const fallbackPairs = {
-            pairs: [
-              { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdc', toNetwork: 'sol' },
-              { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdt', toNetwork: 'sol' },
-              { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'eth', toNetwork: 'eth' },
-              { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'btc', toNetwork: 'btc' },
-              { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdc', toNetwork: 'eth' },
-              { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdt', toNetwork: 'eth' }
-            ]
-          };
-          return NextResponse.json(fallbackPairs);
-        }
-        
-        return NextResponse.json(
-          { error: `API request failed with status: ${response.status}`, details: errorDetails },
-          { status: response.status }
-        );
+        // Return appropriate fallback pairs based on source currency and network
+        return NextResponse.json(getFallbackPairs(body.fromCurrencies[0], body.fromNetworks[0]));
       }
 
       // Get the data from the response
@@ -93,38 +78,14 @@ export async function POST(request: Request) {
         } else {
           console.log('No pairs returned from API. Providing fallback pairs.');
           
-          // If no pairs were returned but we're searching for SOL, provide fallback pairs
-          if (isSearchingForSol) {
-            const fallbackPairs = {
-              pairs: [
-                { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdc', toNetwork: 'sol' },
-                { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdt', toNetwork: 'sol' },
-                { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'eth', toNetwork: 'eth' },
-                { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'btc', toNetwork: 'btc' },
-                { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdc', toNetwork: 'eth' },
-                { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdt', toNetwork: 'eth' }
-              ]
-            };
-            return NextResponse.json(fallbackPairs);
-          }
+          // If no pairs were returned, provide appropriate fallback pairs
+          return NextResponse.json(getFallbackPairs(body.fromCurrencies[0], body.fromNetworks[0]));
         }
       } else {
         console.log('API returned unexpected data format:', data);
         
-        // If the data format is unexpected but we're searching for SOL, provide fallback pairs
-        if (isSearchingForSol) {
-          const fallbackPairs = {
-            pairs: [
-              { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdc', toNetwork: 'sol' },
-              { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdt', toNetwork: 'sol' },
-              { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'eth', toNetwork: 'eth' },
-              { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'btc', toNetwork: 'btc' },
-              { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdc', toNetwork: 'eth' },
-              { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdt', toNetwork: 'eth' }
-            ]
-          };
-          return NextResponse.json(fallbackPairs);
-        }
+        // If the data format is unexpected, provide appropriate fallback pairs
+        return NextResponse.json(getFallbackPairs(body.fromCurrencies[0], body.fromNetworks[0]));
       }
 
       // Return the data from the external API
@@ -132,43 +93,82 @@ export async function POST(request: Request) {
     } catch (fetchError: any) {
       console.error('Error fetching from external API:', fetchError);
       
-      // If we're searching for SOL pairs, provide fallback pairs
-      if (isSearchingForSol) {
-        console.log('Providing fallback SOL pairs due to fetch error');
-        const fallbackPairs = {
-          pairs: [
-            { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdc', toNetwork: 'sol' },
-            { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdt', toNetwork: 'sol' },
-            { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'eth', toNetwork: 'eth' },
-            { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'btc', toNetwork: 'btc' },
-            { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdc', toNetwork: 'eth' },
-            { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdt', toNetwork: 'eth' }
-          ]
-        };
-        return NextResponse.json(fallbackPairs);
-      }
-      
+      // If there's an error fetching, provide appropriate fallback pairs
       return NextResponse.json(
-        { error: 'Failed to fetch from external API', details: fetchError.message || String(fetchError) },
-        { status: 500 }
+        getFallbackPairs(body.fromCurrencies[0], body.fromNetworks[0]),
+        { status: 200 }
       );
     }
   } catch (error: any) {
     console.error('Error in currency-pairs API route:', error);
     
-    // If there's any error in the API route, provide generic fallback pairs
-    const fallbackPairs = {
+    // If there's any error in the API route, provide default fallback pairs
+    return NextResponse.json(
+      getFallbackPairs('eth', 'eth'),
+      { status: 200 }
+    );
+  }
+}
+
+// Function to provide appropriate fallback pairs based on source currency and network
+function getFallbackPairs(fromCurrency: string, fromNetwork: string) {
+  console.log(`Providing fallback pairs for ${fromCurrency} on ${fromNetwork}`);
+  
+  // Convert fromCurrency to lowercase for consistency
+  const currency = fromCurrency.toLowerCase();
+  
+  // SOL fallback pairs
+  if (currency === 'sol' && fromNetwork === 'sol') {
+    return {
       pairs: [
-        { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdc', toNetwork: 'sol' },
-        { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdt', toNetwork: 'sol' },
+        { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdc', toNetwork: 'eth' },
+        { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'usdt', toNetwork: 'eth' },
         { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'eth', toNetwork: 'eth' },
         { fromCurrency: 'sol', fromNetwork: 'sol', toCurrency: 'btc', toNetwork: 'btc' }
       ]
     };
-    
-    return NextResponse.json(
-      fallbackPairs,
-      { status: 200 }
-    );
   }
+  
+  // ETH fallback pairs
+  if (currency === 'eth' && fromNetwork === 'eth') {
+    return {
+      pairs: [
+        { fromCurrency: 'eth', fromNetwork: 'eth', toCurrency: 'usdc', toNetwork: 'eth' },
+        { fromCurrency: 'eth', fromNetwork: 'eth', toCurrency: 'usdt', toNetwork: 'eth' },
+        { fromCurrency: 'eth', fromNetwork: 'eth', toCurrency: 'sol', toNetwork: 'sol' },
+        { fromCurrency: 'eth', fromNetwork: 'eth', toCurrency: 'btc', toNetwork: 'btc' }
+      ]
+    };
+  }
+  
+  // BTC fallback pairs
+  if (currency === 'btc' && fromNetwork === 'btc') {
+    return {
+      pairs: [
+        { fromCurrency: 'btc', fromNetwork: 'btc', toCurrency: 'eth', toNetwork: 'eth' },
+        { fromCurrency: 'btc', fromNetwork: 'btc', toCurrency: 'usdt', toNetwork: 'eth' },
+        { fromCurrency: 'btc', fromNetwork: 'btc', toCurrency: 'sol', toNetwork: 'sol' }
+      ]
+    };
+  }
+  
+  // USDT fallback pairs
+  if (currency === 'usdt' && fromNetwork === 'eth') {
+    return {
+      pairs: [
+        { fromCurrency: 'usdt', fromNetwork: 'eth', toCurrency: 'eth', toNetwork: 'eth' },
+        { fromCurrency: 'usdt', fromNetwork: 'eth', toCurrency: 'btc', toNetwork: 'btc' },
+        { fromCurrency: 'usdt', fromNetwork: 'eth', toCurrency: 'sol', toNetwork: 'sol' }
+      ]
+    };
+  }
+  
+  // Default fallback pairs for any other currency
+  return {
+    pairs: [
+      { fromCurrency: currency, fromNetwork: fromNetwork, toCurrency: 'eth', toNetwork: 'eth' },
+      { fromCurrency: currency, fromNetwork: fromNetwork, toCurrency: 'usdt', toNetwork: 'eth' },
+      { fromCurrency: currency, fromNetwork: fromNetwork, toCurrency: 'sol', toNetwork: 'sol' }
+    ]
+  };
 } 
