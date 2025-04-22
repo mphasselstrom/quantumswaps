@@ -6,7 +6,7 @@ const stats = [
   { value: "+700k", label: "Pairs" },
   { value: "50+", label: "Blockchains" },
   { value: "99.9%", label: "Uptime" },
-  { value: "1.3%", label: "Fee" },
+  { value: "Low", label: "Fees" },
 ];
 
 export default function Clients() {
