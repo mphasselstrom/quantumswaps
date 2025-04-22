@@ -120,11 +120,11 @@ function SwapPageContent() {
                 else if (code === 'btc') networks = ['btc'];
                 else if (code === 'eth') networks = ['eth'];
                 else if (code === 'matic') networks = ['matic'];
-                else if (code === 'avax') networks = ['avax'];
+                else if (code === 'avax') networks = ['avaxc']; // Changed from 'avax' to 'avaxc'
                 else if (code === 'bnb') networks = ['bsc'];
                 else if (code === 'usdt' || code === 'usdc') {
                   // Stablecoins exist on multiple chains
-                  networks = ['eth', 'sol', 'matic', 'bsc', 'avax'];
+                  networks = ['eth', 'sol', 'matic', 'bsc', 'avaxc']; // Changed from 'avax' to 'avaxc'
                 } else {
                   // Default to Ethereum for other tokens
                   networks = ['eth'];
@@ -363,7 +363,7 @@ function SwapPageContent() {
             if (pair.toNetwork === 'eth') displayNetwork = 'Ethereum';
             else if (pair.toNetwork === 'btc') displayNetwork = 'Bitcoin';
             else if (pair.toNetwork === 'matic') displayNetwork = 'Polygon';
-            else if (pair.toNetwork === 'avax') displayNetwork = 'Avalanche';
+            else if (pair.toNetwork === 'avax' || pair.toNetwork === 'avaxc') displayNetwork = 'Avalanche';
             else if (pair.toNetwork === 'bsc') displayNetwork = 'BSC';
             else if (pair.toNetwork === 'sol') displayNetwork = 'Solana';
             
@@ -778,9 +778,15 @@ function SwapWidget({
       setQuoteLoading(true);
       setQuoteError(null);
       
+      // Determine the network to use, converting 'avax' to 'avaxc' when needed
+      let fromNetworkToUse = fromCurrency.network;
+      if (fromNetworkToUse === 'avax') {
+        fromNetworkToUse = 'avaxc';
+      }
+      
       const quoteRequest: SwapQuoteRequest = {
         fromCurrency: fromCurrency.symbol.toLowerCase(),
-        fromNetwork: fromCurrency.network,
+        fromNetwork: fromNetworkToUse,
         toCurrency: toCurrency.symbol.toLowerCase(),
         toNetwork: toCurrency.network,
         fromAmount: amount,
