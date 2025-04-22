@@ -24,11 +24,11 @@ export default function Hero() {
             <h1 className="h1 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4" data-aos="fade-down">Lightning fast and low-cost cross-chain swaps API</h1>
             <p className="text-lg text-slate-300 mb-8" data-aos="fade-down" data-aos-delay="200">Integrate our powerful API to enable instant cross-chain swaps with fixed and floating rates and built-in redundancy for maximum reliability.</p>
             <div className="max-w-xs mx-auto sm:max-w-none sm:inline-flex sm:justify-center space-y-4 sm:space-y-0 sm:space-x-4" data-aos="fade-down" data-aos-delay="400">
-              <div>
+              {/* <div>
                 <a className="btn text-slate-900 bg-linear-to-r from-white/80 via-white to-white/80 hover:bg-white w-full transition duration-150 ease-in-out group" href="/try">
                   Try Now <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span>
                 </a>
-              </div>
+              </div> */}
               <div>
                 <a className="btn text-slate-200 hover:text-white bg-slate-900/25 hover:bg-slate-900/30 w-full transition duration-150 ease-in-out" href="https://swapsxyz.readme.io/reference/">
                   <svg className="shrink-0 fill-slate-300 mr-3" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
