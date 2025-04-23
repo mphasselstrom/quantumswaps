@@ -182,54 +182,39 @@ export const useCurrencies = () => {
         setIsLoading(true);
         setError(null);
 
-        // Create cache keys
-        const fromKey = `from-${fromCurrency}-${fromNetwork}`;
-        const toKey = `to-${toCurrency || ''}-${toNetwork || ''}`;
+        // Make a single API call with all currencies and networks
+        const pairsData = await fetchCurrencyPairs(
+          [fromCurrency, toCurrency].filter(Boolean) as string[],
+          [fromNetwork, toNetwork].filter(Boolean) as string[]
+        );
 
-        // Check cache and prepare fetch promises
-        const fetchPromises: Promise<any>[] = [];
-        let fromPairs = pairsCache.current.get(fromKey);
-        let toPairs = pairsCache.current.get(toKey);
+        // Split the pairs for FROM and TO processing
+        const fromPairs = pairsData.pairs.filter(
+          pair =>
+            pair.fromCurrency?.toLowerCase() === fromCurrency &&
+            pair.fromNetwork === fromNetwork
+        );
 
-        if (!fromPairs) {
-          fetchPromises.push(
-            fetchCurrencyPairs([fromCurrency], [fromNetwork]).then(data => {
-              fromPairs = data.pairs;
-              pairsCache.current.set(fromKey, data.pairs);
-            })
-          );
-        }
+        const toPairs = pairsData.pairs.filter(
+          pair =>
+            (!toCurrency || pair.fromCurrency?.toLowerCase() === toCurrency) &&
+            (!toNetwork || pair.fromNetwork === toNetwork)
+        );
 
-        if (!toPairs) {
-          fetchPromises.push(
-            fetchCurrencyPairs([toCurrency || ''], [toNetwork || '']).then(
-              data => {
-                toPairs = data.pairs;
-                pairsCache.current.set(toKey, data.pairs);
-              }
-            )
-          );
-        }
-
-        // Fetch any uncached pairs
-        if (fetchPromises.length > 0) {
-          await Promise.all(fetchPromises);
-        }
-
-        // Use cached or newly fetched pairs
+        // Process currencies as before
         const currenciesData = await fetchCombinedCurrencyInfo(
-          fromPairs!,
-          toPairs!
+          fromPairs,
+          toPairs
         );
 
         await Promise.all([
           loadFromCurrencies(
-            fromPairs!,
+            fromPairs,
             currenciesData,
             fromCurrency,
             fromNetwork
           ),
-          loadToCurrencies(toPairs!, currenciesData),
+          loadToCurrencies(toPairs, currenciesData),
         ]);
       } catch (err) {
         const errorMessage = logError('loadCurrencies', err);

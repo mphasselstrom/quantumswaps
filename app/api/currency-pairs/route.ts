@@ -1,75 +1,78 @@
 import { NextResponse } from 'next/server';
 
+// Simple in-memory cache with 30-minute expiration
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+
 export async function POST(request: Request) {
   try {
-    // Get request body from incoming request
     const body = await request.json();
     console.log('Currency-pairs API called with body:', body);
 
-    // Validate the request body
-    if (
-      !body.fromCurrencies ||
-      !Array.isArray(body.fromCurrencies) ||
-      body.fromCurrencies.length === 0
-    ) {
-      console.error('Invalid request body - missing fromCurrencies array');
-      return NextResponse.json(
-        { error: 'fromCurrencies is required and must be a non-empty array' },
-        { status: 400 }
-      );
-    }
-
-    if (
-      !body.fromNetworks ||
-      !Array.isArray(body.fromNetworks) ||
-      body.fromNetworks.length === 0
-    ) {
-      console.error('Invalid request body - missing fromNetworks array');
-      return NextResponse.json(
-        { error: 'fromNetworks is required and must be a non-empty array' },
-        { status: 400 }
-      );
-    }
-
-    // Add the optional parameters according to the API spec
     const requestBody = {
-      ...body,
-      toCurrencies: body.toCurrencies || [],
-      toNetworks: body.toNetworks || [],
+      fromCurrencies: Array.from(
+        new Set([...(body.fromCurrencies || []), ...(body.toCurrencies || [])])
+      ),
+      fromNetworks: Array.from(
+        new Set([...(body.fromNetworks || []), ...(body.toNetworks || [])])
+      ),
       search: body.search || '',
     };
 
-    // Make the API call to the external service
-    const response = await fetch('https://api.swaps.xyz/v1/currencies/pairs', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-pk-key': 'pk_live_-bL2S5dJmroQ7BlO5n7B-T347xZRGJBI',
-      },
-      body: JSON.stringify(requestBody),
-    });
+    // Generate cache key from request body
+    const cacheKey = JSON.stringify(requestBody);
+    const now = Date.now();
 
-    if (!response.ok) {
-      console.error(`API request failed with status: ${response.status}`);
-      let errorDetails = '';
-
-      try {
-        const errorData = await response.json();
-        errorDetails = JSON.stringify(errorData);
-        console.error('Error details:', errorData);
-      } catch (parseError) {
-        errorDetails = await response.text();
-        console.error('Error response text:', errorDetails);
-      }
-
-      return NextResponse.json(
-        { error: `API request failed: ${errorDetails}` },
-        { status: response.status }
-      );
+    // Check cache
+    const cached = cache.get(cacheKey);
+    if (cached && now - cached.timestamp < CACHE_DURATION) {
+      return NextResponse.json(cached.data);
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    // Only make the request if we have valid parameters
+    if (
+      !requestBody.fromCurrencies.length ||
+      !requestBody.fromNetworks.length
+    ) {
+      return NextResponse.json({ pairs: [] });
+    }
+
+    // Add timeout to fetch
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
+    try {
+      const response = await fetch(
+        'https://api.swaps.xyz/v1/currencies/pairs',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-pk-key': 'pk_live_-bL2S5dJmroQ7BlO5n7B-T347xZRGJBI',
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal,
+        }
+      );
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Update cache
+      cache.set(cacheKey, { data, timestamp: now });
+
+      return NextResponse.json(data);
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        return NextResponse.json({ error: 'Request timeout' }, { status: 408 });
+      }
+      throw error;
+    }
   } catch (error: any) {
     console.error('Error in currency-pairs API route:', error);
     return NextResponse.json(
