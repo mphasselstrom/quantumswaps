@@ -88,9 +88,9 @@ export const useTransaction = () => {
       const balance = await connection.getBalance(new PublicKey(userAccount));
       const requiredAmount = amount * LAMPORTS_PER_SOL; // Convert SOL to lamports
 
-      if (balance < requiredAmount) {
+      if (balance < requiredAmount && txData.fromCurrency === 'sol') {
         throw new Error(
-          `Insufficient SOL balance. You need at least ${amount} SOL to complete this transaction.`
+          `Insufficient ${txData.fromCurrency.toUpperCase()} balance. You need at least ${amount} ${txData.fromCurrency.toUpperCase()} to complete this transaction.`
         );
       }
 
