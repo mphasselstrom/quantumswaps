@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import SwapWidget from './SwapWidget';
 import CurrencySelector from './CurrencySelector';
 import { useWallet } from '../hooks/useWallet';
@@ -34,16 +34,21 @@ export default function SwapPageContent() {
     swapCurrencies,
   } = useCurrencies();
 
+  const isMounted = useRef(false);
+
   useEffect(() => {
-    const initializeCurrencies = async () => {
-      await loadCurrencies({
-        toCurrency: 'eth',
-        toNetwork: 'eth',
-        fromCurrency: 'sol',
-        fromNetwork: 'sol',
-      });
-    };
-    initializeCurrencies();
+    if (!isMounted.current) {
+      isMounted.current = true;
+      const initializeCurrencies = async () => {
+        await loadCurrencies({
+          toCurrency: 'eth',
+          toNetwork: 'eth',
+          fromCurrency: 'sol',
+          fromNetwork: 'sol',
+        });
+      };
+      initializeCurrencies();
+    }
   }, [loadCurrencies]);
 
   const handleSelectFromCurrency = async (currency: Currency) => {

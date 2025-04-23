@@ -1,14 +1,10 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Currency, ApiCurrencyPair } from '../types';
 import { getNetworkDisplayName } from '../utils/network';
 import { logError } from '../utils/error';
-import {
-  fetchCurrencyInfo,
-  fetchNetworkInfo,
-  fetchCurrencyPairs,
-} from '../utils/api';
+import { fetchCurrencyInfo, fetchCurrencyPairs } from '../utils/api';
 
 export const useCurrencies = () => {
   const [fromCurrency, setFromCurrency] = useState<Currency | null>(null);
@@ -19,15 +15,31 @@ export const useCurrencies = () => {
   const [error, setError] = useState<string | null>(null);
   const [recommendedAmount, setRecommendedAmount] = useState<string>('0.1');
 
-  const [isPairsLoading, setIsPairsLoading] = useState(false);
-  const [isQuoteLoading, setIsQuoteLoading] = useState(false);
-
+  // Add back the pairs cache
   const pairsCache = useRef<Map<string, ApiCurrencyPair[]>>(new Map());
 
-  const initialized = useRef(false);
+  // New function to fetch currency info once for both FROM and TO currencies
+  const fetchCombinedCurrencyInfo = async (
+    fromPairs: ApiCurrencyPair[],
+    toPairs: ApiCurrencyPair[]
+  ) => {
+    const uniqueCurrencies = new Set<string>();
+
+    // Collect unique currencies from both sets of pairs
+    [...fromPairs, ...toPairs].forEach(pair => {
+      if (pair.toCurrency) {
+        uniqueCurrencies.add(pair.toCurrency.toLowerCase());
+      }
+    });
+
+    const currenciesData = await fetchCurrencyInfo(
+      Array.from(uniqueCurrencies)
+    );
+    return currenciesData;
+  };
 
   const loadToCurrencies = useCallback(
-    async (pairs: ApiCurrencyPair[]) => {
+    async (pairs: ApiCurrencyPair[], currenciesData: any[]) => {
       if (!pairs || !Array.isArray(pairs)) return;
 
       try {
@@ -42,10 +54,6 @@ export const useCurrencies = () => {
           }
         });
 
-        // Single currency info fetch
-        const currenciesData = await fetchCurrencyInfo(
-          Array.from(uniqueCurrencies)
-        );
         const toCurrenciesMap = new Map<string, Currency>();
 
         // Process all pairs at once
@@ -101,25 +109,13 @@ export const useCurrencies = () => {
   const loadFromCurrencies = useCallback(
     async (
       pairs: ApiCurrencyPair[],
+      currenciesData: any[],
       defaultCurrency?: string,
       defaultNetwork?: string
     ) => {
       if (!pairs || !Array.isArray(pairs)) return;
 
       try {
-        const uniqueCurrencies = new Set<string>();
-        const uniqueNetworks = new Set<string>();
-
-        pairs.forEach(pair => {
-          if (pair.toCurrency) {
-            uniqueCurrencies.add(pair.toCurrency.toLowerCase());
-            uniqueNetworks.add(pair.toNetwork);
-          }
-        });
-
-        const currenciesData = await fetchCurrencyInfo(
-          Array.from(uniqueCurrencies)
-        );
         const fromCurrenciesMap = new Map<string, Currency>();
 
         pairs.forEach(pair => {
@@ -154,7 +150,6 @@ export const useCurrencies = () => {
         const fromCurrenciesList = Array.from(fromCurrenciesMap.values());
         setFromCurrencies(fromCurrenciesList);
 
-        // Set default FROM currency only if not already set
         if (!fromCurrency && fromCurrenciesList.length > 0) {
           const defaultFromCurrency =
             fromCurrenciesList.find(
@@ -183,24 +178,18 @@ export const useCurrencies = () => {
       fromCurrency: string;
       fromNetwork: string;
     }) => {
-      if (!initialized.current) {
-        initialized.current = true;
-      }
-
       try {
         setIsLoading(true);
         setError(null);
 
-        // Create cache keys for both directions
+        // Create cache keys
         const fromKey = `from-${fromCurrency}-${fromNetwork}`;
         const toKey = `to-${toCurrency || ''}-${toNetwork || ''}`;
 
-        // Check cache for both sets of pairs
+        // Check cache and prepare fetch promises
+        const fetchPromises: Promise<any>[] = [];
         let fromPairs = pairsCache.current.get(fromKey);
         let toPairs = pairsCache.current.get(toKey);
-
-        // Fetch any uncached pairs in parallel
-        const fetchPromises: Promise<any>[] = [];
 
         if (!fromPairs) {
           fetchPromises.push(
@@ -222,15 +211,25 @@ export const useCurrencies = () => {
           );
         }
 
-        // Wait for any necessary fetches to complete
+        // Fetch any uncached pairs
         if (fetchPromises.length > 0) {
           await Promise.all(fetchPromises);
         }
 
-        // Load currencies in parallel using cached pairs
+        // Use cached or newly fetched pairs
+        const currenciesData = await fetchCombinedCurrencyInfo(
+          fromPairs!,
+          toPairs!
+        );
+
         await Promise.all([
-          loadFromCurrencies(fromPairs!, fromCurrency, fromNetwork),
-          loadToCurrencies(toPairs!),
+          loadFromCurrencies(
+            fromPairs!,
+            currenciesData,
+            fromCurrency,
+            fromNetwork
+          ),
+          loadToCurrencies(toPairs!, currenciesData),
         ]);
       } catch (err) {
         const errorMessage = logError('loadCurrencies', err);
