@@ -40,41 +40,41 @@ export async function POST(request: Request) {
     };
 
     // Make the API call to the external service
-    try {
-      const response = await fetch(
-        'https://api.swaps.xyz/v1/currencies/pairs',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-pk-key': 'pk_live_-bL2S5dJmroQ7BlO5n7B-T347xZRGJBI', // API key for authentication
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+    const response = await fetch('https://api.swaps.xyz/v1/currencies/pairs', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-pk-key': 'pk_live_-bL2S5dJmroQ7BlO5n7B-T347xZRGJBI',
+      },
+      body: JSON.stringify(requestBody),
+    });
 
-      if (!response.ok) {
-        console.error(`API request failed with status: ${response.status}`);
-        let errorDetails = '';
+    if (!response.ok) {
+      console.error(`API request failed with status: ${response.status}`);
+      let errorDetails = '';
 
-        try {
-          const errorData = await response.json();
-          errorDetails = JSON.stringify(errorData);
-          console.error('Error details:', errorData);
-        } catch (parseError) {
-          errorDetails = await response.text();
-          console.error('Error response text:', errorDetails);
-        }
-        return [];
+      try {
+        const errorData = await response.json();
+        errorDetails = JSON.stringify(errorData);
+        console.error('Error details:', errorData);
+      } catch (parseError) {
+        errorDetails = await response.text();
+        console.error('Error response text:', errorDetails);
       }
 
-      const data = await response.json();
-      return NextResponse.json(data);
-    } catch (fetchError: any) {
-      console.error('Error fetching from external API:', fetchError);
-      return [];
+      return NextResponse.json(
+        { error: `API request failed: ${errorDetails}` },
+        { status: response.status }
+      );
     }
+
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error: any) {
     console.error('Error in currency-pairs API route:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
