@@ -36,7 +36,12 @@ export default function SwapPageContent() {
 
   useEffect(() => {
     const initializeCurrencies = async () => {
-      await loadCurrencies(['sol'], ['sol']);
+      await loadCurrencies({
+        toCurrency: 'eth',
+        toNetwork: 'eth',
+        fromCurrency: 'sol',
+        fromNetwork: 'sol',
+      });
     };
     initializeCurrencies();
   }, [loadCurrencies]);
@@ -45,7 +50,10 @@ export default function SwapPageContent() {
     setFromCurrency(currency);
     setFromModalOpen(false);
     // This will trigger loading of compatible TO currencies
-    await loadCurrencies([currency.symbol.toLowerCase()], [currency.network]);
+    await loadCurrencies({
+      fromCurrency: currency.symbol.toLowerCase(),
+      fromNetwork: currency.network,
+    });
   };
 
   const handleSelectToCurrency = (currency: Currency) => {

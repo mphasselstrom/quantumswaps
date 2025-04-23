@@ -19,6 +19,11 @@ export const useCurrencies = () => {
   const [error, setError] = useState<string | null>(null);
   const [recommendedAmount, setRecommendedAmount] = useState<string>('0.1');
 
+  const [isPairsLoading, setIsPairsLoading] = useState(false);
+  const [isQuoteLoading, setIsQuoteLoading] = useState(false);
+
+  const pairsCache = useRef<Map<string, ApiCurrencyPair[]>>(new Map());
+
   const initialized = useRef(false);
 
   const loadToCurrencies = useCallback(
@@ -26,6 +31,7 @@ export const useCurrencies = () => {
       if (!pairs || !Array.isArray(pairs)) return;
 
       try {
+        // Process pairs to currencies only once
         const uniqueCurrencies = new Set<string>();
         const uniqueNetworks = new Set<string>();
 
@@ -36,11 +42,13 @@ export const useCurrencies = () => {
           }
         });
 
+        // Single currency info fetch
         const currenciesData = await fetchCurrencyInfo(
           Array.from(uniqueCurrencies)
         );
         const toCurrenciesMap = new Map<string, Currency>();
 
+        // Process all pairs at once
         pairs.forEach(pair => {
           if (!pair.toCurrency) return;
 
@@ -73,17 +81,15 @@ export const useCurrencies = () => {
         const toCurrenciesList = Array.from(toCurrenciesMap.values());
         setToCurrencies(toCurrenciesList);
 
-        if (!toCurrency) {
+        // Set default TO currency only if not already set
+        if (!toCurrency && toCurrenciesList.length > 0) {
           const defaultToCurrency =
             toCurrenciesList.find(
               c =>
                 c.symbol.toLowerCase() === 'eth' &&
                 c.network.toLowerCase() === 'eth'
             ) || toCurrenciesList[0];
-
-          if (defaultToCurrency) {
-            setToCurrency(defaultToCurrency);
-          }
+          setToCurrency(defaultToCurrency);
         }
       } catch (err) {
         logError('loadToCurrencies', err);
@@ -92,57 +98,148 @@ export const useCurrencies = () => {
     [toCurrency]
   );
 
+  const loadFromCurrencies = useCallback(
+    async (
+      pairs: ApiCurrencyPair[],
+      defaultCurrency?: string,
+      defaultNetwork?: string
+    ) => {
+      if (!pairs || !Array.isArray(pairs)) return;
+
+      try {
+        const uniqueCurrencies = new Set<string>();
+        const uniqueNetworks = new Set<string>();
+
+        pairs.forEach(pair => {
+          if (pair.toCurrency) {
+            uniqueCurrencies.add(pair.toCurrency.toLowerCase());
+            uniqueNetworks.add(pair.toNetwork);
+          }
+        });
+
+        const currenciesData = await fetchCurrencyInfo(
+          Array.from(uniqueCurrencies)
+        );
+        const fromCurrenciesMap = new Map<string, Currency>();
+
+        pairs.forEach(pair => {
+          if (!pair.toCurrency) return;
+
+          const currencyId = `${pair.toCurrency.toLowerCase()}-${
+            pair.toNetwork
+          }`;
+
+          if (!fromCurrenciesMap.has(currencyId)) {
+            const code = pair.toCurrency.toLowerCase();
+            const currencyInfo = currenciesData.find(
+              (c: any) => c.code.toLowerCase() === code
+            );
+
+            if (currencyInfo) {
+              fromCurrenciesMap.set(currencyId, {
+                id: currencyId,
+                name: currencyInfo.name || code.toUpperCase(),
+                symbol: code.toUpperCase(),
+                network: pair.toNetwork,
+                networkName: getNetworkDisplayName(pair.toNetwork),
+                imageUrl:
+                  currencyInfo.imageUrl ||
+                  `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/${code}.png`,
+                extraIdName: currencyInfo.requiresExtraTag ? 'Tag' : undefined,
+              });
+            }
+          }
+        });
+
+        const fromCurrenciesList = Array.from(fromCurrenciesMap.values());
+        setFromCurrencies(fromCurrenciesList);
+
+        // Set default FROM currency only if not already set
+        if (!fromCurrency && fromCurrenciesList.length > 0) {
+          const defaultFromCurrency =
+            fromCurrenciesList.find(
+              c =>
+                c.symbol.toLowerCase() === defaultCurrency &&
+                c.network.toLowerCase() === defaultNetwork
+            ) || fromCurrenciesList[0];
+          setFromCurrency(defaultFromCurrency);
+        }
+      } catch (err) {
+        logError('loadFromCurrencies', err);
+      }
+    },
+    [fromCurrency]
+  );
+
   const loadCurrencies = useCallback(
-    async (currencies: string[], networks: string[]) => {
+    async ({
+      toCurrency,
+      toNetwork,
+      fromCurrency,
+      fromNetwork,
+    }: {
+      toCurrency?: string;
+      toNetwork?: string;
+      fromCurrency: string;
+      fromNetwork: string;
+    }) => {
       if (!initialized.current) {
         initialized.current = true;
-      } else if (!fromCurrency) {
-        return;
       }
 
       try {
         setIsLoading(true);
         setError(null);
 
-        const [currenciesData, networksData, pairsData] = await Promise.all([
-          fetchCurrencyInfo(currencies),
-          fetchNetworkInfo(networks),
-          fetchCurrencyPairs(currencies, networks),
-        ]);
+        // Create cache keys for both directions
+        const fromKey = `from-${fromCurrency}-${fromNetwork}`;
+        const toKey = `to-${toCurrency || ''}-${toNetwork || ''}`;
 
-        const transformedCurrencies: Currency[] = currenciesData.map(
-          (currencyInfo: any) => ({
-            id: currencyInfo.id,
-            name: currencyInfo.name || currencyInfo.code.toUpperCase(),
-            symbol: currencyInfo.code.toUpperCase(),
-            network: networksData[0].name || networksData[0].code,
-            networkName: getNetworkDisplayName(
-              networksData[0].name || networksData[0].code
-            ),
-            imageUrl:
-              currencyInfo.imageUrl ||
-              `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons/128/color/${currencyInfo.code.toLowerCase()}.png`,
-            extraIdName: currencyInfo.requiresExtraTag ? 'Tag' : undefined,
-          })
-        );
+        // Check cache for both sets of pairs
+        let fromPairs = pairsCache.current.get(fromKey);
+        let toPairs = pairsCache.current.get(toKey);
 
-        setFromCurrencies(transformedCurrencies);
-        if (!fromCurrency && transformedCurrencies.length > 0) {
-          const newFromCurrency = transformedCurrencies[0];
-          setFromCurrency(newFromCurrency);
+        // Fetch any uncached pairs in parallel
+        const fetchPromises: Promise<any>[] = [];
+
+        if (!fromPairs) {
+          fetchPromises.push(
+            fetchCurrencyPairs([fromCurrency], [fromNetwork]).then(data => {
+              fromPairs = data.pairs;
+              pairsCache.current.set(fromKey, data.pairs);
+            })
+          );
         }
 
-        await loadToCurrencies(pairsData.pairs);
-        return transformedCurrencies;
+        if (!toPairs) {
+          fetchPromises.push(
+            fetchCurrencyPairs([toCurrency || ''], [toNetwork || '']).then(
+              data => {
+                toPairs = data.pairs;
+                pairsCache.current.set(toKey, data.pairs);
+              }
+            )
+          );
+        }
+
+        // Wait for any necessary fetches to complete
+        if (fetchPromises.length > 0) {
+          await Promise.all(fetchPromises);
+        }
+
+        // Load currencies in parallel using cached pairs
+        await Promise.all([
+          loadFromCurrencies(fromPairs!, fromCurrency, fromNetwork),
+          loadToCurrencies(toPairs!),
+        ]);
       } catch (err) {
         const errorMessage = logError('loadCurrencies', err);
         setError(errorMessage);
-        return [];
       } finally {
         setIsLoading(false);
       }
     },
-    [fromCurrency, loadToCurrencies]
+    [loadFromCurrencies, loadToCurrencies]
   );
 
   const swapCurrencies = useCallback(() => {

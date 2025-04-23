@@ -4,8 +4,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Currency, SwapWidgetProps } from '../types';
 import { useQuote } from '../hooks/useQuote';
 import { useTransaction } from '../hooks/useTransaction';
-import { formatRate, formatExpiryTime } from '../utils/format';
-import { useCurrencies } from '../hooks/useCurrencies';
+import { formatExpiryTime } from '../utils/format';
+
 export default function SwapWidget({
   fromCurrency,
   toCurrency,
@@ -19,6 +19,7 @@ export default function SwapWidget({
 }: SwapWidgetProps) {
   const [fromAmount, setFromAmount] = useState<string>('');
   const [recipientAddress, setRecipientAddress] = useState<string>('');
+  const [fromAddress, setFromAddress] = useState<string>('');
   const fromInputRef = useRef<HTMLInputElement>(null);
   const toInputRef = useRef<HTMLInputElement>(null);
 
@@ -116,13 +117,13 @@ export default function SwapWidget({
   const handleSwap = async () => {
     if (!fromCurrency || !toCurrency || !fromAmount || !quoteSignature) return;
 
-    if (!isConnected) {
-      setWalletVisible(true);
+    if (!recipientAddress) {
+      alert(`Please enter a recipient ${toCurrency.symbol} wallet address`);
       return;
     }
 
-    if (!recipientAddress) {
-      alert(`Please enter a recipient ${toCurrency.symbol} wallet address`);
+    if (!isConnected && !fromAddress) {
+      alert(`Please enter a source ${fromCurrency.symbol} wallet address`);
       return;
     }
 
@@ -130,10 +131,10 @@ export default function SwapWidget({
       const executeData = await executeTransaction(
         quoteSignature,
         recipientAddress,
-        userAccount
+        isConnected ? userAccount : fromAddress
       );
 
-      if (fromCurrency.network === 'sol') {
+      if (fromCurrency.network === 'sol' && isConnected) {
         await sendSolanaTransaction(
           userAccount,
           parseFloat(fromAmount),
@@ -235,6 +236,31 @@ export default function SwapWidget({
         </div>
       ) : (
         <>
+          {/* Add From Address input when wallet is not connected */}
+          {!isConnected && (
+            <div className="mb-4">
+              <div className="flex justify-between mb-2">
+                <label className="text-sm text-slate-400 font-medium">
+                  {fromCurrency
+                    ? `${fromCurrency.symbol} Source Address (${fromCurrency.network})`
+                    : 'Source Address'}
+                </label>
+              </div>
+              <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
+                <input
+                  type="text"
+                  className="w-full bg-transparent text-sm text-slate-200 focus:outline-none focus:ring-0 border-none font-mono"
+                  placeholder={
+                    fromCurrency
+                      ? `Enter ${fromCurrency.symbol} (${fromCurrency.network}) address`
+                      : 'Enter source address'
+                  }
+                  value={fromAddress}
+                  onChange={e => setFromAddress(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
           {/* From Section */}
           <div>
             <div className="flex justify-between mb-2">
@@ -403,7 +429,6 @@ export default function SwapWidget({
               />
             </div>
           </div>
-
           {/* Quote Details */}
           {quoteData && (
             <div className="bg-slate-900/50 rounded-lg p-4 mb-4">
@@ -513,7 +538,7 @@ export default function SwapWidget({
               !fromAmount ||
               parseFloat(fromAmount) === 0
             }
-            onClick={!isConnected ? () => setWalletVisible(true) : handleSwap}
+            onClick={handleSwap}
           >
             {quoteLoading ? (
               <span className="flex items-center">
@@ -539,8 +564,6 @@ export default function SwapWidget({
                 </svg>
                 Getting Quote...
               </span>
-            ) : !isConnected ? (
-              'Connect Wallet'
             ) : (
               'Swap'
             )}

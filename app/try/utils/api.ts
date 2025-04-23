@@ -1,6 +1,6 @@
 import { Currency, SwapQuoteRequest } from '../types';
 
-export async function fetchCurrencyInfo(currencies: string[]) {
+export async function fetchCurrencyInfo(currencies?: string[]) {
   const response = await fetch('/api/currencies', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -9,7 +9,7 @@ export async function fetchCurrencyInfo(currencies: string[]) {
   return response.json();
 }
 
-export async function fetchNetworkInfo(networks: string[]) {
+export async function fetchNetworkInfo(networks?: string[]) {
   const response = await fetch('/api/networks', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
