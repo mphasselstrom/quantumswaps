@@ -4,7 +4,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const response = await fetch(
-      'https://api.swaps.xyz/v1/currencies/currencies_info',
+      'https://api.swaps.xyz/v1/currencies/networks_info',
       {
         method: 'POST',
         headers: {
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch currencies' },
+      { error: 'Failed to fetch networks' },
       { status: 500 }
     );
   }
