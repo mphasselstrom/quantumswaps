@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
     // Add timeout to fetch
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+    const timeout = setTimeout(() => controller.abort(), 20000); // 20 second timeout
 
     try {
       const response = await fetch(
