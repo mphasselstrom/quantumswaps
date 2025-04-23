@@ -137,8 +137,7 @@ export const useTransaction = () => {
         }, 60000);
       } catch (err: any) {
         if (err.name === 'SendTransactionError') {
-          const errorMessage =
-            'Transaction failed. Please make sure you have enough SOL to cover the amount plus network fees.';
+          const errorMessage = `Transaction failed. Please make sure you have enough ${txData.fromCurrency.toUpperCase()} to cover the amount plus network fees.`;
           setError(errorMessage);
           throw new Error(errorMessage);
         }

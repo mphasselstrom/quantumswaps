@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { SwapQuoteRequest, SwapQuoteResponse, Currency } from '../types';
 import { fetchQuote } from '../utils/api';
 import { formatApiError } from '../utils/error';
-import { getRecommendedAmount } from '../utils/currency';
 
 export const useQuote = (
   fromCurrency: Currency | null,

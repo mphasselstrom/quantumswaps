@@ -5,9 +5,16 @@ import {
   ConnectionProvider,
   WalletProvider,
 } from '@solana/wallet-adapter-react';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import SwapPageContent from './components/SwapPageContent';
+
+declare global {
+  interface Window {
+    ethereum?: any;
+    web3?: any;
+    solana?: any;
+  }
+}
 
 export default function SwapPage() {
   const endpoint = useMemo(
