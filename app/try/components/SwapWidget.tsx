@@ -5,6 +5,8 @@ import { Currency, SwapWidgetProps } from '../types';
 import { useQuote } from '../hooks/useQuote';
 import { useTransaction } from '../hooks/useTransaction';
 import { formatExpiryTime } from '../utils/format';
+import TransactionTracker from './TransactionTracker';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
 export default function SwapWidget({
   fromCurrency,
@@ -13,10 +15,13 @@ export default function SwapWidget({
   setToModalOpen,
   swapCurrencies,
   isConnected,
-  connectWallet,
   userAccount,
-  setWalletVisible,
 }: SwapWidgetProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const initialTxId = searchParams.get('txId');
+
   const [fromAmount, setFromAmount] = useState<string>('');
   const [recipientAddress, setRecipientAddress] = useState<string>('');
   const [fromAddress, setFromAddress] = useState<string>('');
@@ -27,13 +32,23 @@ export default function SwapWidget({
     useQuote(fromCurrency, toCurrency, fromAmount, userAccount);
 
   const {
-    transactionInProgress,
-    transactionStatus,
     transactionData,
     error: transactionError,
     executeTransaction,
     sendSolanaTransaction,
   } = useTransaction();
+
+  // Add effect to set query param when component loads with transaction data
+  useEffect(() => {
+    if (transactionData?.id && !searchParams.get('txId')) {
+      // Create new URLSearchParams object
+      const params = new URLSearchParams(searchParams);
+      params.set('txId', transactionData.id);
+
+      // Update URL with the transaction ID
+      router.push(`${pathname}?${params.toString()}`);
+    }
+  }, [transactionData?.id, pathname, router, searchParams]);
 
   // Get recommended amount based on currency (~$100 equivalent)
   const getRecommendedAmount = useCallback(
@@ -156,84 +171,19 @@ export default function SwapWidget({
         </div>
       </div>
 
-      {transactionData ? (
-        <div className="space-y-4">
-          {/* Transaction Details */}
-          <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
-            <div className="flex flex-col space-y-2">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Send:</span>
-                <span className="text-slate-300">
-                  {fromAmount} {fromCurrency?.symbol}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Receive:</span>
-                <span className="text-slate-300">
-                  {quoteData?.toAmount} {toCurrency?.symbol}
-                </span>
-              </div>
-
-              <div className="mt-4 mb-2">
-                <span className="text-slate-400 block mb-1">
-                  Transaction ID:
-                </span>
-                <div className="bg-slate-800 p-3 rounded border border-slate-700 break-all font-mono text-sm text-slate-300">
-                  {transactionData.id}
-                </div>
-              </div>
-
-              <div className="bg-indigo-900/30 rounded-lg p-3 border border-indigo-700 mt-2">
-                <h3 className="text-indigo-300 font-medium mb-2">
-                  Send Payment Instructions
-                </h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Send Exactly:</span>
-                    <span className="text-slate-300 font-medium">
-                      {transactionData.fromAmount} {fromCurrency?.symbol}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block mb-1">
-                      Deposit Address:
-                    </span>
-                    <div className="bg-slate-800 p-2 rounded break-all font-mono text-xs text-slate-300">
-                      {transactionData.depositAddress}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {fromCurrency?.network === 'sol' && (
-                <button
-                  onClick={() =>
-                    sendSolanaTransaction(
-                      userAccount,
-                      parseFloat(fromAmount),
-                      transactionData
-                    )
-                  }
-                  className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition duration-150 ease-in-out mt-4"
-                  disabled={
-                    transactionStatus === 'processing' ||
-                    transactionStatus === 'success'
-                  }
-                >
-                  {transactionStatus === 'processing'
-                    ? 'Processing...'
-                    : 'Send with Phantom'}
-                </button>
-              )}
-            </div>
-          </div>
-
-          {(transactionError || quoteError) && (
-            <div className="bg-red-900/20 border border-red-700 rounded-lg p-3 text-red-400 text-sm">
-              {transactionError || quoteError}
-            </div>
-          )}
-        </div>
+      {transactionData?.id || initialTxId ? (
+        <TransactionTracker
+          fromCurrency={fromCurrency}
+          toCurrency={toCurrency}
+          fromAmount={fromAmount}
+          quoteData={quoteData}
+          transactionId={(transactionData?.id || initialTxId) as string}
+          transactionError={transactionError}
+          quoteError={quoteError}
+          userAccount={userAccount}
+          isConnected={isConnected}
+          onSendSolanaTransaction={sendSolanaTransaction}
+        />
       ) : (
         <>
           {/* Add From Address input when wallet is not connected */}

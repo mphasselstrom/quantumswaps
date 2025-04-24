@@ -4,6 +4,7 @@ export const API_ENDPOINTS = {
   CURRENCY_PAIRS: '/api/currency-pairs',
   QUOTE: '/api/swap/quote',
   EXECUTE: '/api/swap/execute',
+  STATUS: '/api/swap/status',
 };
 
 export const TRANSACTION_STATUSES = {

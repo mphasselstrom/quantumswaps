@@ -86,3 +86,38 @@ export interface Network {
   addressRegex: string | null;
   addressTagRegex: string | null;
 }
+
+export enum TransactionStatus {
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+  PAYOUT_CREATED = 'payout_created',
+}
+
+export interface TransactionData {
+  // Identifiers
+  id: string;
+  externalId: string;
+
+  // From (Source) details
+  fromCurrency: string;
+  fromNetwork: string;
+  fromAmount: string;
+  fromWalletAddress: string;
+  fromWalletAddressExtra: string;
+
+  // To (Destination) details
+  toCurrency: string;
+  toNetwork: string;
+  toAmount: string;
+  toWalletAddress: string;
+  toWalletAddressExtra: string;
+
+  // Status information
+  status: TransactionStatus;
+  completedAt: string; // ISO 8601 date-time string
+
+  // Deposit information
+  depositAddress: string;
+  depositExtraId: string;
+}

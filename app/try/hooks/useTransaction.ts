@@ -7,6 +7,7 @@ import {
   getTransactionStatus,
 } from '../utils/transaction';
 import { logError } from '../utils/error';
+import { TransactionData } from '../types';
 
 export const useTransaction = () => {
   const [transactionInProgress, setTransactionInProgress] = useState(false);
@@ -14,7 +15,8 @@ export const useTransaction = () => {
   const [transactionStatus, setTransactionStatus] = useState<string | null>(
     null
   );
-  const [transactionData, setTransactionData] = useState<any>(null);
+  const [transactionData, setTransactionData] =
+    useState<TransactionData | null>(null);
   const [transactionSignature, setTransactionSignature] = useState<
     string | null
   >(null);
