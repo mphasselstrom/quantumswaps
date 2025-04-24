@@ -10,12 +10,8 @@ export async function POST(request: Request) {
     console.log('Currency-pairs API called with body:', body);
 
     const requestBody = {
-      fromCurrencies: Array.from(
-        new Set([...(body.fromCurrencies || []), ...(body.toCurrencies || [])])
-      ),
-      fromNetworks: Array.from(
-        new Set([...(body.fromNetworks || []), ...(body.toNetworks || [])])
-      ),
+      fromCurrencies: Array.from(new Set([...(body.fromCurrencies || [])])),
+      fromNetworks: Array.from(new Set([...(body.fromNetworks || [])])),
       search: body.search || '',
     };
 

@@ -1,18 +1,27 @@
-import { Currency, CurrencyInfo } from '../types';
+import { Currency, CurrencyInfo, Network } from '../types';
 import { getNetworkDisplayName } from './network';
-
 export const transformCurrency = (
   currencyInfo: CurrencyInfo,
-  network: string
+  network: Network
 ): Currency => ({
-  id: `${currencyInfo.code.toLowerCase()}-${network}`,
-  name: currencyInfo.name || currencyInfo.code.toUpperCase(),
+  id: `${currencyInfo.code.toLowerCase()}-${network.code}`,
+  name: currencyInfo.name,
   symbol: currencyInfo.code.toUpperCase(),
-  network,
-  networkName: getNetworkDisplayName(network),
-  imageUrl: getCurrencyImageUrl(currencyInfo.code, currencyInfo.imageUrl),
+  network: network.code,
+  networkName: getNetworkDisplayName(network.code),
+  imageUrl: currencyInfo.imageUrl,
   extraIdName: currencyInfo.requiresExtraTag ? 'Tag' : undefined,
 });
+
+export const transformCurrencyWithNetworks = (
+  currencyInfo: CurrencyInfo
+): Currency[] => {
+  return (
+    currencyInfo.networks?.map(network =>
+      transformCurrency(currencyInfo, network)
+    ) || []
+  );
+};
 
 export const getCurrencyImageUrl = (
   code: string,

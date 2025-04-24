@@ -289,6 +289,9 @@ export default function SwapWidget({
                       <span className="text-slate-300">
                         {fromCurrency.symbol}
                       </span>
+                      <span className="text-slate-500 text-xs">
+                        ({fromCurrency.networkName})
+                      </span>
                     </>
                   ) : (
                     <span className="text-slate-300">Select</span>

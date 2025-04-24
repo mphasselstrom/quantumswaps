@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 // Simple in-memory cache with 30-minute expiration
 const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+const CACHE_DURATION = 10 * 60 * 1000; // 30 minutes
 
 export async function POST(request: Request) {
   try {

@@ -73,5 +73,16 @@ export interface CurrencyInfo {
   isEnabled: boolean;
   imageUrl?: string;
   requiresExtraTag?: boolean;
-  networks?: string[]; // Make networks optional since it's not present in the response
+  networks?: Network[];
+}
+
+export interface Network {
+  id: string;
+  code: string;
+  name: string;
+  imageUrl: string | null;
+  transactionUrl: string | null;
+  addressUrl: string | null;
+  addressRegex: string | null;
+  addressTagRegex: string | null;
 }

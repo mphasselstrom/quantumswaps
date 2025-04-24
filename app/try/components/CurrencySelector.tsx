@@ -19,7 +19,7 @@ export default function CurrencySelector({
   const modalContentRef = useRef<HTMLDivElement>(null);
   const [visibleRangeStart, setVisibleRangeStart] = useState(0);
 
-  const ITEMS_TO_RENDER = 50;
+  const ITEMS_TO_RENDER = 200;
 
   const performLocalSearch = useCallback(
     (query: string) => {
