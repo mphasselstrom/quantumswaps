@@ -7,6 +7,7 @@ import {
 } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import SwapPageContent from './components/SwapPageContent';
+import '@solana/wallet-adapter-react-ui/styles.css';
 
 declare global {
   interface Window {
