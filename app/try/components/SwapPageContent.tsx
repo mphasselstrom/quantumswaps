@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import SwapWidget from './SwapWidget';
+import SwapWidget from './swap-widget';
 import CurrencySelector from './CurrencySelector';
 import { useWallet } from '../hooks/useWallet';
 import { useCurrencies } from '../hooks/useCurrencies';

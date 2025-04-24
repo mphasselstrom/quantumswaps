@@ -1,0 +1,118 @@
+import { useState, useCallback, useEffect } from 'react';
+import { Currency } from '../../../types';
+import { useQuote } from '../../../hooks/useQuote';
+import { useTransaction } from '../../../hooks/useTransaction';
+import { getRecommendedAmount } from '../../../utils/currency';
+
+export function useSwap(
+  fromCurrency: Currency | null,
+  toCurrency: Currency | null,
+  userAccount: string,
+  isConnected: boolean
+) {
+  const [fromAmount, setFromAmount] = useState<string>('');
+  const [recipientAddress, setRecipientAddress] = useState<string>('');
+  const [fromAddress, setFromAddress] = useState<string>('');
+
+  const { quoteData, quoteLoading, quoteError, quoteSignature, getQuote } =
+    useQuote(fromCurrency, toCurrency, fromAmount, userAccount);
+
+  const {
+    transactionData,
+    error: transactionError,
+    executeTransaction,
+    sendSolanaTransaction,
+  } = useTransaction();
+
+  const handleFromAmountChange = useCallback(
+    (value: string) => {
+      if (/^\d*\.?\d*$/.test(value)) {
+        setFromAmount(value);
+        getQuote(value);
+      }
+    },
+    [getQuote]
+  );
+
+  const handleRecipientAddressChange = useCallback((value: string) => {
+    setRecipientAddress(value);
+  }, []);
+
+  const handleFromAddressChange = useCallback((value: string) => {
+    setFromAddress(value);
+  }, []);
+
+  const handleSwap = useCallback(async () => {
+    if (!fromCurrency || !toCurrency || !fromAmount || !quoteSignature) return;
+
+    if (!recipientAddress) {
+      alert(`Please enter a recipient ${toCurrency.symbol} wallet address`);
+      return;
+    }
+
+    if (!isConnected && !fromAddress) {
+      alert(`Please enter a source ${fromCurrency.symbol} wallet address`);
+      return;
+    }
+
+    try {
+      const executeData = await executeTransaction(
+        quoteSignature,
+        recipientAddress,
+        isConnected ? userAccount : fromAddress
+      );
+
+      if (fromCurrency.network === 'sol' && isConnected) {
+        await sendSolanaTransaction(
+          userAccount,
+          parseFloat(fromAmount),
+          executeData
+        );
+      }
+    } catch (err) {
+      console.error('Swap execution failed:', err);
+    }
+  }, [
+    fromCurrency,
+    toCurrency,
+    fromAmount,
+    quoteSignature,
+    recipientAddress,
+    isConnected,
+    fromAddress,
+    userAccount,
+    executeTransaction,
+    sendSolanaTransaction,
+  ]);
+
+  const loadRecommendedAmount = useCallback(async () => {
+    const recommendedAmount = await getRecommendedAmount(fromCurrency);
+    if (!fromAmount || parseFloat(fromAmount) === 0) {
+      setFromAmount(recommendedAmount);
+      getQuote(recommendedAmount);
+    }
+  }, [fromCurrency, fromAmount, getQuote]);
+
+  useEffect(() => {
+    if (fromCurrency) {
+      loadRecommendedAmount();
+    }
+  }, [fromCurrency, loadRecommendedAmount]);
+
+  return {
+    fromAmount,
+    recipientAddress,
+    fromAddress,
+    quoteData,
+    quoteLoading,
+    quoteError,
+    transactionData,
+    transactionError,
+    handleFromAmountChange,
+    handleRecipientAddressChange,
+    handleFromAddressChange,
+    handleSwap,
+    loadRecommendedAmount,
+    sendSolanaTransaction,
+  };
+}
