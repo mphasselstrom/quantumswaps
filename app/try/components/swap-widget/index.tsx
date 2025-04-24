@@ -1,6 +1,6 @@
 'use client';
 
-import { RefObject, useRef } from 'react';
+import { RefObject, useRef, useState, useEffect } from 'react';
 import { SwapWidgetProps } from '../../types';
 import TransactionTracker from '../transaction-tracker';
 import { CurrencyInput } from './CurrencyInput';
@@ -9,6 +9,8 @@ import { QuoteDetails } from './QuoteDetails';
 import { SwapButton } from './SwapButton';
 import { useSwap } from './hooks/useSwap';
 import { useUrlParams } from './hooks/useUrlParams';
+import { useRouter } from 'next/navigation';
+import { TransactionStatus } from '../../types';
 
 export default function SwapWidget({
   fromCurrency,
@@ -21,6 +23,8 @@ export default function SwapWidget({
 }: SwapWidgetProps) {
   const fromInputRef = useRef<HTMLInputElement>(null);
   const toInputRef = useRef<HTMLInputElement>(null);
+  const [showTransactionTracker, setShowTransactionTracker] = useState(false);
+  const router = useRouter();
 
   const {
     fromAmount,
@@ -36,9 +40,30 @@ export default function SwapWidget({
     handleFromAddressChange,
     handleSwap,
     sendSolanaTransaction,
+    clearErrors,
+    resetTransaction,
   } = useSwap(fromCurrency, toCurrency, userAccount, isConnected);
 
   const { initialTxId } = useUrlParams(transactionData?.id);
+
+  useEffect(() => {
+    if (initialTxId) {
+      setShowTransactionTracker(true);
+    }
+  }, [initialTxId]);
+
+  const handleBackToSwap = () => {
+    setShowTransactionTracker(false);
+    clearErrors();
+    resetTransaction();
+    // Clear the transaction ID from the URL
+    router.push('/try');
+  };
+
+  const handleSwapClick = async () => {
+    await handleSwap();
+    setShowTransactionTracker(true);
+  };
 
   return (
     <div className="bg-slate-800/90 border border-slate-700 p-5 rounded-xl shadow-lg">
@@ -49,7 +74,7 @@ export default function SwapWidget({
         </div>
       </div>
 
-      {transactionData?.id || initialTxId ? (
+      {showTransactionTracker ? (
         <TransactionTracker
           fromCurrency={fromCurrency}
           toCurrency={toCurrency}
@@ -61,6 +86,7 @@ export default function SwapWidget({
           userAccount={userAccount}
           isConnected={isConnected}
           onSendSolanaTransaction={sendSolanaTransaction}
+          onBackToSwap={handleBackToSwap}
         />
       ) : (
         <>
@@ -166,7 +192,7 @@ export default function SwapWidget({
               !recipientAddress ||
               parseFloat(fromAmount) === 0
             }
-            onClick={handleSwap}
+            onClick={handleSwapClick}
           />
         </>
       )}

@@ -14,6 +14,10 @@ export const useQuote = (
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [quoteSignature, setQuoteSignature] = useState<string | null>(null);
 
+  const clearQuoteError = () => {
+    setQuoteError(null);
+  };
+
   const getQuote = async (amount: string) => {
     if (!fromCurrency || !toCurrency || !amount || parseFloat(amount) <= 0) {
       return;
@@ -82,5 +86,6 @@ export const useQuote = (
     quoteError,
     quoteSignature,
     getQuote,
+    clearQuoteError,
   };
 };

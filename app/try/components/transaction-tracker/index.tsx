@@ -21,7 +21,9 @@ interface TransactionTrackerProps {
     amount: number,
     txData: any
   ) => Promise<void>;
+  onBackToSwap: () => void;
 }
+
 function TransactionTracker({
   fromCurrency,
   toCurrency,
@@ -33,6 +35,7 @@ function TransactionTracker({
   userAccount,
   isConnected,
   onSendSolanaTransaction,
+  onBackToSwap,
 }: TransactionTrackerProps) {
   const { transactionData } = useTransactionTracker(transactionId);
 
@@ -41,6 +44,28 @@ function TransactionTracker({
   }
   return (
     <div className="space-y-4">
+      <button
+        onClick={onBackToSwap}
+        className="flex items-center text-slate-400 hover:text-slate-300 transition-colors duration-150"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="mr-2"
+        >
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back to Swap
+      </button>
+
       <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
         <div className="flex flex-col space-y-2">
           <TransactionSummary

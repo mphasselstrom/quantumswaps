@@ -14,15 +14,28 @@ export function useSwap(
   const [recipientAddress, setRecipientAddress] = useState<string>('');
   const [fromAddress, setFromAddress] = useState<string>('');
 
-  const { quoteData, quoteLoading, quoteError, quoteSignature, getQuote } =
-    useQuote(fromCurrency, toCurrency, fromAmount, userAccount);
+  const {
+    quoteData,
+    quoteLoading,
+    quoteError,
+    quoteSignature,
+    getQuote,
+    clearQuoteError,
+  } = useQuote(fromCurrency, toCurrency, fromAmount, userAccount);
 
   const {
     transactionData,
     error: transactionError,
     executeTransaction,
     sendSolanaTransaction,
+    clearTransactionError,
+    resetTransaction,
   } = useTransaction();
+
+  const clearErrors = useCallback(() => {
+    clearQuoteError();
+    clearTransactionError();
+  }, [clearQuoteError, clearTransactionError]);
 
   const handleFromAmountChange = useCallback(
     (value: string) => {
@@ -114,5 +127,7 @@ export function useSwap(
     handleSwap,
     loadRecommendedAmount,
     sendSolanaTransaction,
+    clearErrors,
+    resetTransaction,
   };
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { HELIUS_RPC_ENDPOINT } from '../utils/network';
 import { TRANSACTION_STATUSES } from '../utils/constants';
@@ -7,7 +7,7 @@ import {
   getTransactionStatus,
 } from '../utils/transaction';
 import { logError } from '../utils/error';
-import { TransactionData } from '../types';
+import { TransactionData, TransactionStatus } from '../types';
 
 export const useTransaction = () => {
   const [transactionInProgress, setTransactionInProgress] = useState(false);
@@ -22,6 +22,10 @@ export const useTransaction = () => {
   >(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const clearTransactionError = () => {
+    setError(null);
+  };
 
   const executeTransaction = async (
     quoteSignature: string,
@@ -172,5 +176,6 @@ export const useTransaction = () => {
     executeTransaction,
     sendSolanaTransaction,
     resetTransaction,
+    clearTransactionError,
   };
 };
