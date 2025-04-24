@@ -3,23 +3,24 @@
 import { useEffect, useState, useRef } from 'react';
 import SwapWidget from './SwapWidget';
 import CurrencySelector from './CurrencySelector';
-import { useWallet } from '../hooks/useWallet';
 import { useCurrencies } from '../hooks/useCurrencies';
 import { Currency } from '../types';
+import { useWallet } from '../context/WalletProvider';
 
 export default function SwapPageContent() {
   const [fromModalOpen, setFromModalOpen] = useState(false);
   const [toModalOpen, setToModalOpen] = useState(false);
 
   const {
-    wallet,
-    isConnected,
-    userAccount,
+    connector,
+    isConnecting,
     error: walletError,
-    connectWallet,
-    disconnectWallet,
-    showWalletModal,
+    connect,
+    disconnect,
   } = useWallet();
+
+  const isConnected = connector?.isConnected || false;
+  const userAccount = connector?.userAccount || '';
 
   const {
     fromCurrency,
@@ -54,7 +55,6 @@ export default function SwapPageContent() {
   const handleSelectFromCurrency = async (currency: Currency) => {
     setFromCurrency(currency);
     setFromModalOpen(false);
-    // This will trigger loading of compatible TO currencies
     await loadCurrencies({
       fromCurrency: currency.symbol.toLowerCase(),
       fromNetwork: currency.network,
@@ -103,7 +103,8 @@ export default function SwapPageContent() {
           <div className="max-w-lg mx-auto mb-6">
             {!isConnected ? (
               <button
-                onClick={showWalletModal}
+                onClick={connect}
+                disabled={isConnecting}
                 className="w-full bg-slate-800 text-white font-bold py-3 px-4 rounded-lg border border-slate-700 hover:bg-slate-700 transition duration-150 ease-in-out flex items-center justify-center space-x-2 cursor-pointer"
               >
                 <svg
@@ -119,7 +120,7 @@ export default function SwapPageContent() {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span>Connect Wallet</span>
+                <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
               </button>
             ) : (
               <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
@@ -131,7 +132,7 @@ export default function SwapPageContent() {
                     </span>
                   </div>
                   <button
-                    onClick={disconnectWallet}
+                    onClick={disconnect}
                     className="text-sm px-3 py-1 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition duration-150 ease-in-out cursor-pointer"
                   >
                     Disconnect
@@ -156,7 +157,9 @@ export default function SwapPageContent() {
           {/* Error state */}
           {(error || walletError) && (
             <div className="max-w-lg mx-auto p-6 bg-red-900/20 border border-red-700 rounded-lg text-center">
-              <p className="text-red-400">{error || walletError}</p>
+              <p className="text-red-400">
+                Unexpected error occurred. Please try again.
+              </p>
               <button
                 onClick={() => window.location.reload()}
                 className="mt-4 px-4 py-2 bg-slate-800 text-slate-200 rounded-lg hover:bg-slate-700 transition duration-150 ease-in-out cursor-pointer"
@@ -175,10 +178,6 @@ export default function SwapPageContent() {
                 setFromModalOpen={setFromModalOpen}
                 setToModalOpen={setToModalOpen}
                 swapCurrencies={swapCurrencies}
-                isConnected={isConnected}
-                connectWallet={connectWallet}
-                userAccount={userAccount}
-                setWalletVisible={showWalletModal}
               />
             </div>
           )}

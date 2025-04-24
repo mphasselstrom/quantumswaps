@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { Currency, ApiCurrencyPair } from '../types';
+import { SwapError } from '../types/errors';
 import { getNetworkDisplayName } from '../utils/network';
 import { logError } from '../utils/error';
 import { fetchCurrencyInfo, fetchCurrencyPairs } from '../utils/api';
@@ -12,7 +13,7 @@ export const useCurrencies = () => {
   const [fromCurrencies, setFromCurrencies] = useState<Currency[]>([]);
   const [toCurrencies, setToCurrencies] = useState<Currency[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<SwapError | null>(null);
   const [recommendedAmount, setRecommendedAmount] = useState<string>('0.1');
 
   // Add back the pairs cache

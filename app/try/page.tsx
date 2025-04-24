@@ -1,16 +1,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import {
-  ConnectionProvider,
-  WalletProvider,
-} from '@solana/wallet-adapter-react';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import SwapPageContent from './components/SwapPageContent';
+import { WalletProvider } from './context/WalletProvider';
 
 declare global {
   interface Window {
-    ethereum?: any;
+    ethereum?: Record<string, unknown>;
     web3?: any;
     solana?: any;
   }
@@ -25,12 +21,8 @@ export default function SwapPage() {
   const wallets = useMemo(() => [], []);
 
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>
-          <SwapPageContent />
-        </WalletModalProvider>
-      </WalletProvider>
-    </ConnectionProvider>
+    <WalletProvider>
+      <SwapPageContent />
+    </WalletProvider>
   );
 }

@@ -5,6 +5,7 @@ import { Currency, SwapWidgetProps } from '../types';
 import { useQuote } from '../hooks/useQuote';
 import { useTransaction } from '../hooks/useTransaction';
 import { formatExpiryTime } from '../utils/format';
+import { useWalletConnection } from '../hooks/useWalletConnection';
 
 export default function SwapWidget({
   fromCurrency,
@@ -12,10 +13,6 @@ export default function SwapWidget({
   setFromModalOpen,
   setToModalOpen,
   swapCurrencies,
-  isConnected,
-  connectWallet,
-  userAccount,
-  setWalletVisible,
 }: SwapWidgetProps) {
   const [fromAmount, setFromAmount] = useState<string>('');
   const [recipientAddress, setRecipientAddress] = useState<string>('');
@@ -23,16 +20,17 @@ export default function SwapWidget({
   const fromInputRef = useRef<HTMLInputElement>(null);
   const toInputRef = useRef<HTMLInputElement>(null);
 
+  const { isConnected, userAccount } = useWalletConnection();
+
   const { quoteData, quoteLoading, quoteError, quoteSignature, getQuote } =
     useQuote(fromCurrency, toCurrency, fromAmount, userAccount);
 
   const {
-    transactionInProgress,
     transactionStatus,
     transactionData,
     error: transactionError,
     executeTransaction,
-    sendSolanaTransaction,
+    sendTransaction,
   } = useTransaction();
 
   // Get recommended amount based on currency (~$100 equivalent)
@@ -135,11 +133,7 @@ export default function SwapWidget({
       );
 
       if (fromCurrency.network === 'sol' && isConnected) {
-        await sendSolanaTransaction(
-          userAccount,
-          parseFloat(fromAmount),
-          executeData
-        );
+        await sendTransaction(userAccount, parseFloat(fromAmount), executeData);
       }
     } catch (err) {
       console.error('Swap execution failed:', err);
@@ -208,7 +202,7 @@ export default function SwapWidget({
               {fromCurrency?.network === 'sol' && (
                 <button
                   onClick={() =>
-                    sendSolanaTransaction(
+                    sendTransaction(
                       userAccount,
                       parseFloat(fromAmount),
                       transactionData

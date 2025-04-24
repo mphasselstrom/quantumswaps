@@ -6,6 +6,15 @@ export const API_ENDPOINTS = {
   EXECUTE: '/api/swap/execute',
 };
 
+export const WALLET_ERRORS = {
+  NOT_CONNECTED: 'Wallet not connected',
+  UNSUPPORTED_NETWORK: 'Unsupported network',
+  TRANSACTION_FAILED: 'Transaction failed',
+  INSUFFICIENT_BALANCE: 'Insufficient balance',
+  USER_REJECTED: 'User rejected the transaction',
+  NETWORK_ERROR: 'Network error occurred',
+};
+
 export const TRANSACTION_STATUSES = {
   CREATED: 'created',
   WAITING_CONFIRMATION: 'waiting_for_confirmation',

@@ -1,12 +1,7 @@
 import { useState } from 'react';
-import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { HELIUS_RPC_ENDPOINT } from '../utils/network';
 import { TRANSACTION_STATUSES } from '../utils/constants';
-import {
-  createSolanaTransaction,
-  getTransactionStatus,
-} from '../utils/transaction';
 import { logError } from '../utils/error';
+import { useWallet } from '../context/WalletProvider';
 
 export const useTransaction = () => {
   const [transactionInProgress, setTransactionInProgress] = useState(false);
@@ -20,6 +15,8 @@ export const useTransaction = () => {
   >(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const { connector } = useWallet();
 
   const executeTransaction = async (
     quoteSignature: string,
@@ -48,9 +45,7 @@ export const useTransaction = () => {
       }
 
       const executeData = await response.json();
-
       setTransactionData(executeData);
-
       setTransactionId(executeData.id);
       setTransactionStatus(TRANSACTION_STATUSES.CREATED);
       return executeData;
@@ -65,14 +60,14 @@ export const useTransaction = () => {
     }
   };
 
-  const sendSolanaTransaction = async (
+  const sendTransaction = async (
     userAccount: string,
     amount: number,
     txData: any
   ) => {
     try {
-      if (!window.solana?.isPhantom) {
-        throw new Error('Phantom wallet not detected');
+      if (!connector) {
+        throw new Error('Wallet not connected');
       }
 
       if (!txData?.depositAddress) {
@@ -82,69 +77,17 @@ export const useTransaction = () => {
       setTransactionStatus(TRANSACTION_STATUSES.WAITING_CONFIRMATION);
       setError(null);
 
-      const connection = new Connection(HELIUS_RPC_ENDPOINT, 'confirmed');
+      await connector.sendTransaction(amount, {
+        id: txData.id,
+        fromAmount: amount.toString(),
+        depositAddress: txData.depositAddress,
+        network: txData.fromNetwork,
+        data: txData.data,
+      });
 
-      // Check balance before proceeding
-      const balance = await connection.getBalance(new PublicKey(userAccount));
-      const requiredAmount = amount * LAMPORTS_PER_SOL; // Convert SOL to lamports
-
-      if (balance < requiredAmount && txData.fromCurrency === 'sol') {
-        throw new Error(
-          `Insufficient ${txData.fromCurrency.toUpperCase()} balance. You need at least ${amount} ${txData.fromCurrency.toUpperCase()} to complete this transaction.`
-        );
-      }
-
-      const transaction = await createSolanaTransaction(
-        userAccount,
-        txData.depositAddress,
-        amount
-      );
-
-      try {
-        const signedTransaction = await window.solana.signTransaction(
-          transaction
-        );
-        setTransactionStatus(TRANSACTION_STATUSES.PROCESSING);
-
-        const signature = await connection.sendRawTransaction(
-          signedTransaction.serialize(),
-          {
-            skipPreflight: false,
-            preflightCommitment: 'confirmed',
-          }
-        );
-        setTransactionSignature(signature);
-
-        // Poll for confirmation
-        const confirmationInterval = setInterval(async () => {
-          try {
-            const status = await getTransactionStatus(signature);
-            if (status === 'confirmed') {
-              clearInterval(confirmationInterval);
-              setTransactionStatus(TRANSACTION_STATUSES.SUCCESS);
-            }
-          } catch (err) {
-            console.error('Error checking confirmation:', err);
-          }
-        }, 2000);
-
-        // Set timeout
-        setTimeout(() => {
-          clearInterval(confirmationInterval);
-          if (transactionStatus !== TRANSACTION_STATUSES.SUCCESS) {
-            setTransactionStatus(TRANSACTION_STATUSES.PENDING);
-          }
-        }, 60000);
-      } catch (err: any) {
-        if (err.name === 'SendTransactionError') {
-          const errorMessage = `Transaction failed. Please make sure you have enough ${txData.fromCurrency.toUpperCase()} to cover the amount plus network fees.`;
-          setError(errorMessage);
-          throw new Error(errorMessage);
-        }
-        throw err;
-      }
+      setTransactionStatus(TRANSACTION_STATUSES.SUCCESS);
     } catch (err) {
-      const errorMessage = logError('sendSolanaTransaction', err);
+      const errorMessage = logError('sendTransaction', err);
       setError(errorMessage);
       setTransactionStatus(TRANSACTION_STATUSES.FAILED);
       throw err;
@@ -167,8 +110,9 @@ export const useTransaction = () => {
     transactionData,
     transactionSignature,
     error,
+    isLoading,
     executeTransaction,
-    sendSolanaTransaction,
+    sendTransaction, // renamed from sendSolanaTransaction
     resetTransaction,
   };
 };

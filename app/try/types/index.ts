@@ -16,10 +16,6 @@ export interface SwapWidgetProps {
   setFromModalOpen: (isOpen: boolean) => void;
   setToModalOpen: (isOpen: boolean) => void;
   swapCurrencies: () => void;
-  isConnected: boolean;
-  connectWallet: () => Promise<string | null>;
-  userAccount: string;
-  setWalletVisible: (visible: boolean) => void;
 }
 
 export interface CurrencySelectorProps {
