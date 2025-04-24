@@ -26,7 +26,7 @@ export function CurrencyInput({
       <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
         <div className="flex items-center justify-between">
           <button
-            className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 py-1 px-3 rounded-full"
+            className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 py-1 px-3 rounded-full cursor-pointer"
             onClick={onCurrencySelect}
           >
             {currency ? (

@@ -46,7 +46,7 @@ function TransactionTracker({
     <div className="space-y-4">
       <button
         onClick={onBackToSwap}
-        className="flex items-center text-slate-400 hover:text-slate-300 transition-colors duration-150"
+        className="flex items-center text-slate-400 hover:text-slate-300 transition-colors duration-150 cursor-pointer"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -97,7 +97,7 @@ function TransactionTracker({
                   transactionData
                 )
               }
-              className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition duration-150 ease-in-out mt-4"
+              className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition duration-150 ease-in-out mt-4 cursor-pointer"
               disabled={
                 transactionData.status === TransactionStatus.FAILED ||
                 transactionData.status === TransactionStatus.COMPLETED

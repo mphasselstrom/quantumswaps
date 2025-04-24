@@ -14,7 +14,7 @@ export function SwapButton({
       className={`w-full py-3 px-4 rounded-lg transition duration-150 ease-in-out flex items-center justify-center ${
         isDisabled
           ? 'bg-purple-600/50 text-white/70 cursor-not-allowed'
-          : 'bg-purple-600 text-white hover:bg-purple-700'
+          : 'bg-purple-600 text-white hover:bg-purple-700 cursor-pointer'
       }`}
       disabled={isDisabled}
       onClick={onClick}
