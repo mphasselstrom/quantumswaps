@@ -18,16 +18,13 @@ export async function fetchNetworkInfo(networks?: string[]) {
   return response.json();
 }
 
-export async function fetchCurrencyPairs(
-  currencies: string[],
-  networks: string[]
-) {
+export async function fetchCurrencyPairs(currency: string, network: string) {
   const response = await fetch('/api/currency-pairs', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      fromCurrencies: currencies,
-      fromNetworks: networks,
+      fromCurrency: currency,
+      fromNetwork: network,
     }),
   });
   return response.json();

@@ -130,10 +130,7 @@ export const useCurrencies = () => {
         setError(null);
 
         // Make a single API call with all currencies and networks
-        const pairsData = await fetchCurrencyPairs(
-          [fromCurrency],
-          [fromNetwork]
-        );
+        const pairsData = await fetchCurrencyPairs(fromCurrency, fromNetwork);
 
         const toPairs = pairsData.pairs;
 
