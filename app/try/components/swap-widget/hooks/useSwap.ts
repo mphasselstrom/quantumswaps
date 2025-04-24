@@ -83,10 +83,6 @@ export function useSwap(
         recipientAddress,
         isConnected ? userAccount : fromAddress
       );
-
-      if (fromCurrency.network === 'sol' && isConnected) {
-        await sendSolanaTransaction(userAccount, amount, executeData);
-      }
     } catch (err) {
       console.error('Swap execution failed:', err);
     }
@@ -100,7 +96,6 @@ export function useSwap(
     fromAddress,
     userAccount,
     executeTransaction,
-    sendSolanaTransaction,
   ]);
 
   const loadRecommendedAmount = useCallback(async () => {

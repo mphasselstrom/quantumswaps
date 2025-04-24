@@ -92,7 +92,7 @@ export const useTransaction = () => {
 
       // Check balance before proceeding
       const balance = await connection.getBalance(new PublicKey(userAccount));
-      const requiredAmount = amount * LAMPORTS_PER_SOL; // Convert SOL to lamports
+      const requiredAmount = amount * LAMPORTS_PER_SOL;
 
       if (balance < requiredAmount && txData.fromCurrency === 'sol') {
         throw new Error(
@@ -106,50 +106,28 @@ export const useTransaction = () => {
         amount
       );
 
-      try {
-        const signedTransaction = await window.solana.signTransaction(
-          transaction
-        );
-        setTransactionStatus(TRANSACTION_STATUSES.PROCESSING);
+      // Sign and send in one step
+      const signature = await window.solana.signAndSendTransaction(transaction);
+      setTransactionSignature(signature.signature);
+      setTransactionStatus(TRANSACTION_STATUSES.PROCESSING);
 
-        const signature = await connection.sendRawTransaction(
-          signedTransaction.serialize(),
-          {
-            skipPreflight: false,
-            preflightCommitment: 'confirmed',
-          }
-        );
-        setTransactionSignature(signature);
+      // Wait for confirmation
+      const confirmation = await connection.confirmTransaction(
+        signature.signature
+      );
 
-        // Poll for confirmation
-        const confirmationInterval = setInterval(async () => {
-          try {
-            const status = await getTransactionStatus(signature);
-            if (status === 'confirmed') {
-              clearInterval(confirmationInterval);
-              setTransactionStatus(TRANSACTION_STATUSES.SUCCESS);
-            }
-          } catch (err) {
-            console.error('Error checking confirmation:', err);
-          }
-        }, 2000);
-
-        // Set timeout
-        setTimeout(() => {
-          clearInterval(confirmationInterval);
-          if (transactionStatus !== TRANSACTION_STATUSES.SUCCESS) {
-            setTransactionStatus(TRANSACTION_STATUSES.PENDING);
-          }
-        }, 60000);
-      } catch (err: any) {
-        if (err.name === 'SendTransactionError') {
-          const errorMessage = `Transaction failed. Please make sure you have enough ${txData.fromCurrency.toUpperCase()} to cover the amount plus network fees.`;
-          setError(errorMessage);
-          throw new Error(errorMessage);
-        }
-        throw err;
+      if (confirmation.value.err) {
+        throw new Error('Transaction failed to confirm');
       }
-    } catch (err) {
+
+      setTransactionStatus(TRANSACTION_STATUSES.SUCCESS);
+      return signature.signature;
+    } catch (err: any) {
+      if (err.name === 'SendTransactionError') {
+        const errorMessage = `Transaction failed. Please make sure you have enough ${txData.fromCurrency.toUpperCase()} to cover the amount plus network fees.`;
+        setError(errorMessage);
+        throw new Error(errorMessage);
+      }
       const errorMessage = logError('sendSolanaTransaction', err);
       setError(errorMessage);
       setTransactionStatus(TRANSACTION_STATUSES.FAILED);

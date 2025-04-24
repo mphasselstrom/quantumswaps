@@ -7,7 +7,7 @@ function PaymentInstructions({
   depositExtraId,
 }: {
   fromAmount: string;
-  fromCurrency: Currency | null;
+  fromCurrency: string | null;
   depositAddress: string;
   depositExtraId?: string;
 }) {
@@ -20,7 +20,7 @@ function PaymentInstructions({
         <div className="flex justify-between">
           <span className="text-slate-400">Send Exactly:</span>
           <span className="text-slate-300 font-medium">
-            {fromAmount} {fromCurrency?.symbol}
+            {fromAmount} {fromCurrency?.toLocaleUpperCase()}
           </span>
         </div>
         <div>
