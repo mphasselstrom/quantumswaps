@@ -1,22 +1,8 @@
 import { NextResponse } from 'next/server';
 
-// Simple in-memory cache with 30-minute expiration
-const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_DURATION = 10 * 60 * 1000; // 30 minutes
-
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-
-    // Generate cache key from request body
-    const cacheKey = JSON.stringify(body);
-    const now = Date.now();
-
-    // Check cache
-    const cached = cache.get(cacheKey);
-    if (cached && now - cached.timestamp < CACHE_DURATION) {
-      return NextResponse.json(cached.data);
-    }
 
     // Add timeout to fetch
     const controller = new AbortController();
@@ -43,9 +29,6 @@ export async function POST(request: Request) {
       }
 
       const data = await response.json();
-
-      // Update cache
-      cache.set(cacheKey, { data, timestamp: now });
 
       return NextResponse.json(data);
     } catch (error: any) {
