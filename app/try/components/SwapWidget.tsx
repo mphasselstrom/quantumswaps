@@ -533,12 +533,22 @@ export default function SwapWidget({
 
           {/* Swap Button */}
           <button
-            className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition duration-150 ease-in-out flex items-center justify-center"
+            className={`w-full py-3 px-4 rounded-lg transition duration-150 ease-in-out flex items-center justify-center ${
+              quoteLoading ||
+              !fromCurrency ||
+              !toCurrency ||
+              !fromAmount ||
+              !recipientAddress ||
+              parseFloat(fromAmount) === 0
+                ? 'bg-purple-600/50 text-white/70 cursor-not-allowed' // disabled state
+                : 'bg-purple-600 text-white hover:bg-purple-700' // enabled state
+            }`}
             disabled={
               quoteLoading ||
               !fromCurrency ||
               !toCurrency ||
               !fromAmount ||
+              !recipientAddress ||
               parseFloat(fromAmount) === 0
             }
             onClick={handleSwap}
