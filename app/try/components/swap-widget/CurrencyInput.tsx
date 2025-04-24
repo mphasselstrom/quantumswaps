@@ -5,7 +5,7 @@ interface CurrencyInputProps {
   currency: Currency | null;
   amount: string;
   inputRef: RefObject<HTMLInputElement>;
-  onAmountChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onAmountChange: (value: string) => void;
   onCurrencySelect: () => void;
   label: string;
 }
@@ -67,10 +67,11 @@ export function CurrencyInput({
           <input
             ref={inputRef}
             type="text"
+            inputMode="decimal"
             className="w-1/2 text-right bg-transparent text-xl text-slate-200 focus:outline-none focus:ring-0 border-none"
             placeholder="0.0"
             value={amount}
-            onChange={onAmountChange}
+            onChange={e => onAmountChange(e.target.value)}
           />
         </div>
       </div>

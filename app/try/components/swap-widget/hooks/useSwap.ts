@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Currency } from '../../../types';
 import { useQuote } from '../../../hooks/useQuote';
 import { useTransaction } from '../../../hooks/useTransaction';
@@ -13,6 +13,7 @@ export function useSwap(
   const [fromAmount, setFromAmount] = useState<string>('');
   const [recipientAddress, setRecipientAddress] = useState<string>('');
   const [fromAddress, setFromAddress] = useState<string>('');
+  const hasLoadedInitialAmount = useRef(false);
 
   const {
     quoteData,
@@ -39,9 +40,11 @@ export function useSwap(
 
   const handleFromAmountChange = useCallback(
     (value: string) => {
-      if (/^\d*\.?\d*$/.test(value)) {
+      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
         setFromAmount(value);
-        getQuote(value);
+        if (value && value !== '.') {
+          getQuote(value);
+        }
       }
     },
     [getQuote]
@@ -56,7 +59,13 @@ export function useSwap(
   }, []);
 
   const handleSwap = useCallback(async () => {
-    if (!fromCurrency || !toCurrency || !fromAmount || !quoteSignature) return;
+    if (!fromCurrency || !toCurrency || !quoteSignature) return;
+
+    const amount = parseFloat(fromAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert('Please enter a valid amount greater than 0');
+      return;
+    }
 
     if (!recipientAddress) {
       alert(`Please enter a recipient ${toCurrency.symbol} wallet address`);
@@ -76,11 +85,7 @@ export function useSwap(
       );
 
       if (fromCurrency.network === 'sol' && isConnected) {
-        await sendSolanaTransaction(
-          userAccount,
-          parseFloat(fromAmount),
-          executeData
-        );
+        await sendSolanaTransaction(userAccount, amount, executeData);
       }
     } catch (err) {
       console.error('Swap execution failed:', err);
@@ -99,12 +104,13 @@ export function useSwap(
   ]);
 
   const loadRecommendedAmount = useCallback(async () => {
-    const recommendedAmount = await getRecommendedAmount(fromCurrency);
-    if (!fromAmount || parseFloat(fromAmount) === 0) {
+    if (!hasLoadedInitialAmount.current && fromCurrency) {
+      const recommendedAmount = await getRecommendedAmount(fromCurrency);
       setFromAmount(recommendedAmount);
       getQuote(recommendedAmount);
+      hasLoadedInitialAmount.current = true;
     }
-  }, [fromCurrency, fromAmount, getQuote]);
+  }, [fromCurrency, getQuote]);
 
   useEffect(() => {
     if (fromCurrency) {

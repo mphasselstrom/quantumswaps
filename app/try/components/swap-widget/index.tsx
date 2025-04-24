@@ -112,7 +112,7 @@ export default function SwapWidget({
             currency={fromCurrency}
             amount={fromAmount}
             inputRef={fromInputRef as RefObject<HTMLInputElement>}
-            onAmountChange={e => handleFromAmountChange(e.target.value)}
+            onAmountChange={handleFromAmountChange}
             onCurrencySelect={() => setFromModalOpen(true)}
             label="From"
           />
