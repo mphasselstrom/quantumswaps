@@ -41,8 +41,6 @@ export default function SwapPageContent() {
       isMounted.current = true;
       const initializeCurrencies = async () => {
         await loadCurrencies({
-          toCurrency: 'eth',
-          toNetwork: 'eth',
           fromCurrency: 'sol',
           fromNetwork: 'sol',
         });

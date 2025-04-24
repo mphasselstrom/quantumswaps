@@ -107,7 +107,6 @@ export function useSwap(
     if (!hasLoadedInitialAmount.current && fromCurrency) {
       const recommendedAmount = await getRecommendedAmount(fromCurrency);
       setFromAmount(recommendedAmount);
-      getQuote(recommendedAmount);
       hasLoadedInitialAmount.current = true;
     }
   }, [fromCurrency, getQuote]);

@@ -14,25 +14,10 @@ export const useCurrencies = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [recommendedAmount, setRecommendedAmount] = useState<string>('0.1');
-
-  // New function to fetch currency info once for both FROM and TO currencies
-  const fetchToCurrencyInfo = async (pairs: ApiCurrencyPair[]) => {
-    const uniqueCurrencies = new Set<string>();
-
-    // Collect unique currencies from both sets of pairs
-    pairs.forEach(pair => {
-      if (pair.toCurrency) {
-        uniqueCurrencies.add(pair.toCurrency.toLowerCase());
-      }
-    });
-    const currenciesData = await fetchCurrencyInfo(
-      Array.from(uniqueCurrencies)
-    );
-    return currenciesData;
-  };
+  const allCurrencies = useRef<Currency[]>([]);
 
   const loadToCurrencies = useCallback(
-    async (pairs: ApiCurrencyPair[], currenciesData: any[]) => {
+    async (pairs: ApiCurrencyPair[]) => {
       if (!pairs || !Array.isArray(pairs)) return;
 
       try {
@@ -47,23 +32,13 @@ export const useCurrencies = () => {
           availableNetworksByCurrency.get(code)?.add(pair.toNetwork);
         });
 
-        // Transform currencies but only include networks that are in our pairs
-        const toCurrenciesList: Currency[] = currenciesData.flatMap(
-          currencyInfo => {
+        // Filter all currencies to only include those with available networks
+        const toCurrenciesList: Currency[] = allCurrencies.current.filter(
+          currency => {
             const availableNetworks = availableNetworksByCurrency.get(
-              currencyInfo.code.toLowerCase()
+              currency.symbol.toLowerCase()
             );
-            if (!availableNetworks) return [];
-
-            // Filter networks to only those available in pairs
-            const filteredCurrencyInfo = {
-              ...currencyInfo,
-              networks: currencyInfo.networks.filter(network =>
-                availableNetworks.has(network.code)
-              ),
-            };
-
-            return transformCurrencyWithNetworks(filteredCurrencyInfo);
+            return availableNetworks && availableNetworks.has(currency.network);
           }
         );
 
@@ -89,21 +64,22 @@ export const useCurrencies = () => {
   const loadFromCurrencies = useCallback(
     async (defaultCurrency?: string, defaultNetwork?: string) => {
       try {
-        const currenciesData = await fetchCurrencyInfo();
-        const fromCurrenciesList: Currency[] = currenciesData.flatMap(
-          currencyInfo => transformCurrencyWithNetworks(currencyInfo)
-        );
+        if (allCurrencies.current.length === 0) {
+          const currenciesData = await fetchCurrencyInfo();
+          allCurrencies.current = currenciesData.flatMap(currencyInfo =>
+            transformCurrencyWithNetworks(currencyInfo)
+          );
+        }
 
-        setFromCurrencies(fromCurrenciesList);
+        setFromCurrencies(allCurrencies.current);
 
-        if (!fromCurrency && fromCurrenciesList.length > 0) {
+        if (!fromCurrency && allCurrencies.current.length > 0) {
           const defaultFromCurrency =
-            fromCurrenciesList.find(
+            allCurrencies.current.find(
               c =>
                 c.symbol.toLowerCase() === defaultCurrency &&
                 c.network.toLowerCase() === defaultNetwork
-            ) || fromCurrenciesList[0];
-          console.log('defaultFromCurrency', defaultFromCurrency);
+            ) || allCurrencies.current[0];
           setFromCurrency(defaultFromCurrency);
         }
       } catch (err) {
@@ -115,13 +91,9 @@ export const useCurrencies = () => {
 
   const loadCurrencies = useCallback(
     async ({
-      toCurrency,
-      toNetwork,
       fromCurrency,
       fromNetwork,
     }: {
-      toCurrency?: string;
-      toNetwork?: string;
       fromCurrency: string;
       fromNetwork: string;
     }) => {
@@ -131,16 +103,10 @@ export const useCurrencies = () => {
 
         // Make a single API call with all currencies and networks
         const pairsData = await fetchCurrencyPairs(fromCurrency, fromNetwork);
-
         const toPairs = pairsData.pairs;
 
-        // Process currencies as before
-        const currenciesData = await fetchToCurrencyInfo(toPairs);
-
-        await Promise.all([
-          loadFromCurrencies(fromCurrency, fromNetwork),
-          loadToCurrencies(toPairs, currenciesData),
-        ]);
+        await loadFromCurrencies(fromCurrency, fromNetwork);
+        loadToCurrencies(toPairs);
       } catch (err) {
         const errorMessage = logError('loadCurrencies', err);
         setError(errorMessage);
