@@ -66,6 +66,11 @@ export default function SwapPageContent() {
 
   return (
     <section className="relative">
+      {/* Beta Banner */}
+      <div className="fixed top-0 left-0 right-0 bg-indigo-600 text-white text-center py-2 z-50">
+        <p className="text-sm font-medium">✨ Welcome to our beta preview! We're still polishing things up, so please bear with us if you encounter any hiccups. ✨</p>
+      </div>
+      
       {/* Background gradient */}
       <div
         className="absolute inset-0 bg-slate-900 pointer-events-none -z-10"
