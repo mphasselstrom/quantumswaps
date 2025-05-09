@@ -65,7 +65,7 @@ export default function Features02() {
                       <div className="md:max-w-[480px] shrink-0 order-1 md:order-none p-6 pt-0 md:p-8">
                         <div>
                           <h3 className="inline-flex text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-1">Lowest fees available</h3>
-                          <p className="text-slate-400">Enjoy a flat 1.3% fee across all trading pairs - the most competitive rate in the industry. No hidden fees, no surprises.</p>
+                          <p className="text-slate-400">Enjoy a flat fee as low as 30bps across all trading pairs - the most competitive rate in the industry. No hidden fees, no surprises.</p>
                         </div>
                       </div>
                       {/* Image */}
